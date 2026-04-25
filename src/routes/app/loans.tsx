@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { AppHeader } from "@/components/mpesa/AppHeader";
 import { Banknote, PiggyBank, TrendingUp } from "lucide-react";
 
-export const Route = createFileRoute("/_app/loans")({ component: LoansPage });
+export const Route = createFileRoute("/app/loans")({ component: LoansPage });
 
 function LoansPage() {
   return (

@@ -11,7 +11,7 @@ import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
 import { formatKES } from "@/lib/format";
 
-export const Route = createFileRoute("/_app/send")({ component: SendPage });
+export const Route = createFileRoute("/app/send")({ component: SendPage });
 
 function SendPage() {
   const [phone, setPhone] = useState("");

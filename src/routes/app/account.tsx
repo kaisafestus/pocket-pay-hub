@@ -14,7 +14,7 @@ import { Dialog, DialogTrigger, DialogContent, DialogHeader, DialogTitle, Dialog
 import { ShieldCheck, Store, Wallet, LogOut, KeyRound } from "lucide-react";
 import { formatPhone } from "@/lib/format";
 
-export const Route = createFileRoute("/_app/account")({ component: AccountPage });
+export const Route = createFileRoute("/app/account")({ component: AccountPage });
 
 function AccountPage() {
   const { user, roles, signOut, refreshRoles } = useAuth();

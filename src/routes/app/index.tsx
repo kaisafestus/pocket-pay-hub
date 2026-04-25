@@ -7,7 +7,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { formatKES, timeAgo } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
-export const Route = createFileRoute("/_app/")({
+export const Route = createFileRoute("/app/")({
   component: Dashboard,
 });
 

@@ -12,7 +12,7 @@ import { agentDeposit } from "@/server/wallet.functions";
 import { toast } from "sonner";
 import { formatKES } from "@/lib/format";
 
-export const Route = createFileRoute("/_app/agent")({ component: AgentDashboard });
+export const Route = createFileRoute("/app/agent")({ component: AgentDashboard });
 
 function AgentDashboard() {
   const { user } = useAuth();

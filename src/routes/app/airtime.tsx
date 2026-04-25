@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { AppHeader } from "@/components/mpesa/AppHeader";
 import { Smartphone } from "lucide-react";
 
-export const Route = createFileRoute("/_app/airtime")({ component: AirtimePage });
+export const Route = createFileRoute("/app/airtime")({ component: AirtimePage });
 
 function AirtimePage() {
   return (

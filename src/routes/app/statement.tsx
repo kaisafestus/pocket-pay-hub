@@ -11,7 +11,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { requestReversal } from "@/server/wallet.functions";
 import { toast } from "sonner";
 
-export const Route = createFileRoute("/_app/statement")({ component: StatementPage });
+export const Route = createFileRoute("/app/statement")({ component: StatementPage });
 
 function StatementPage() {
   const { user } = useAuth();

@@ -6,7 +6,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { formatKES, timeAgo } from "@/lib/format";
 import { Store } from "lucide-react";
 
-export const Route = createFileRoute("/_app/merchant")({ component: MerchantDashboard });
+export const Route = createFileRoute("/app/merchant")({ component: MerchantDashboard });
 
 function MerchantDashboard() {
   const { user } = useAuth();

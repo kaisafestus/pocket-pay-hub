@@ -12,7 +12,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { formatKES } from "@/lib/format";
 
-export const Route = createFileRoute("/_app/withdraw")({ component: WithdrawPage });
+export const Route = createFileRoute("/app/withdraw")({ component: WithdrawPage });
 
 function WithdrawPage() {
   const [agentNumber, setAgent] = useState("");

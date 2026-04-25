@@ -12,7 +12,7 @@ import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
 import { formatKES } from "@/lib/format";
 
-export const Route = createFileRoute("/_app/lipa")({ component: LipaPage });
+export const Route = createFileRoute("/app/lipa")({ component: LipaPage });
 
 function LipaPage() {
   return (
