@@ -5,7 +5,7 @@ import { Loader2, Home, History, Store, Wallet, LogOut, User } from "lucide-reac
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 
-export const Route = createFileRoute("/_app")({
+export const Route = createFileRoute("/app")({
   component: AppLayout,
 });
 
