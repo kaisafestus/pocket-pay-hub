@@ -75,8 +75,8 @@ export const sendMoney = createServerFn({ method: "POST" })
       _type: "send_money",
       _description: data.description ?? `Send to ${prof.full_name}`,
       _recipient_phone: phone,
-      _shortcode: null,
-      _account_ref: null,
+      _shortcode: undefined,
+      _account_ref: undefined,
       _fee: fee,
     });
     if (error) throw new Error(error.message);
@@ -104,8 +104,8 @@ export const payTill = createServerFn({ method: "POST" })
       _type: "pay_till",
       _description: `Pay ${m.business_name}`,
       _shortcode: data.till,
-      _recipient_phone: null,
-      _account_ref: null,
+      _recipient_phone: undefined,
+      _account_ref: undefined,
       _fee: 0,
     });
     if (error) throw new Error(error.message);
@@ -135,7 +135,7 @@ export const payBill = createServerFn({ method: "POST" })
       _description: `Pay ${m.business_name} • ${data.account}`,
       _shortcode: data.paybill,
       _account_ref: data.account,
-      _recipient_phone: null,
+      _recipient_phone: undefined,
       _fee: 0,
     });
     if (error) throw new Error(error.message);
@@ -166,8 +166,8 @@ export const withdrawAtAgent = createServerFn({ method: "POST" })
       _type: "withdraw_agent",
       _description: `Withdraw at ${agent.store_name}`,
       _shortcode: data.agentNumber,
-      _recipient_phone: null,
-      _account_ref: null,
+      _recipient_phone: undefined,
+      _account_ref: undefined,
       _fee: fee,
     });
     if (error) throw new Error(error.message);
@@ -201,7 +201,7 @@ export const agentDeposit = createServerFn({ method: "POST" })
       _description: `Deposit by agent ${agent.store_name}`,
       _shortcode: agent.agent_number,
       _recipient_phone: phone,
-      _account_ref: null,
+      _account_ref: undefined,
       _fee: 0,
     });
     if (error) throw new Error(error.message);
@@ -276,8 +276,8 @@ export const requestReversal = createServerFn({ method: "POST" })
       _amount: Number(txn.amount),
       _type: "reversal",
       _description: `Reversal of ${txn.ref_code}`,
-      _shortcode: null,
-      _recipient_phone: null,
+      _shortcode: undefined,
+      _recipient_phone: undefined,
       _account_ref: txn.ref_code,
       _fee: 0,
     });
