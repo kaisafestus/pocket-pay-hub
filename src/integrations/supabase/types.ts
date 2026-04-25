@@ -14,16 +14,246 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      agents: {
+        Row: {
+          agent_number: string
+          created_at: string
+          float_balance: number
+          id: string
+          location: string | null
+          store_name: string
+          user_id: string
+        }
+        Insert: {
+          agent_number: string
+          created_at?: string
+          float_balance?: number
+          id?: string
+          location?: string | null
+          store_name: string
+          user_id: string
+        }
+        Update: {
+          agent_number?: string
+          created_at?: string
+          float_balance?: number
+          id?: string
+          location?: string | null
+          store_name?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      merchants: {
+        Row: {
+          business_name: string
+          category: string | null
+          created_at: string
+          id: string
+          shortcode: string
+          type: Database["public"]["Enums"]["merchant_type"]
+          user_id: string
+        }
+        Insert: {
+          business_name: string
+          category?: string | null
+          created_at?: string
+          id?: string
+          shortcode: string
+          type: Database["public"]["Enums"]["merchant_type"]
+          user_id: string
+        }
+        Update: {
+          business_name?: string
+          category?: string | null
+          created_at?: string
+          id?: string
+          shortcode?: string
+          type?: Database["public"]["Enums"]["merchant_type"]
+          user_id?: string
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          created_at: string
+          full_name: string | null
+          id: string
+          id_number: string | null
+          phone: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          full_name?: string | null
+          id: string
+          id_number?: string | null
+          phone?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          full_name?: string | null
+          id?: string
+          id_number?: string | null
+          phone?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      transactions: {
+        Row: {
+          account_ref: string | null
+          amount: number
+          checkout_request_id: string | null
+          completed_at: string | null
+          created_at: string
+          description: string | null
+          fee: number
+          id: string
+          merchant_request_id: string | null
+          mpesa_receipt: string | null
+          raw_callback: Json | null
+          recipient_id: string | null
+          recipient_phone: string | null
+          recipient_shortcode: string | null
+          ref_code: string
+          sender_id: string | null
+          status: Database["public"]["Enums"]["txn_status"]
+          type: Database["public"]["Enums"]["txn_type"]
+        }
+        Insert: {
+          account_ref?: string | null
+          amount: number
+          checkout_request_id?: string | null
+          completed_at?: string | null
+          created_at?: string
+          description?: string | null
+          fee?: number
+          id?: string
+          merchant_request_id?: string | null
+          mpesa_receipt?: string | null
+          raw_callback?: Json | null
+          recipient_id?: string | null
+          recipient_phone?: string | null
+          recipient_shortcode?: string | null
+          ref_code: string
+          sender_id?: string | null
+          status?: Database["public"]["Enums"]["txn_status"]
+          type: Database["public"]["Enums"]["txn_type"]
+        }
+        Update: {
+          account_ref?: string | null
+          amount?: number
+          checkout_request_id?: string | null
+          completed_at?: string | null
+          created_at?: string
+          description?: string | null
+          fee?: number
+          id?: string
+          merchant_request_id?: string | null
+          mpesa_receipt?: string | null
+          raw_callback?: Json | null
+          recipient_id?: string | null
+          recipient_phone?: string | null
+          recipient_shortcode?: string | null
+          ref_code?: string
+          sender_id?: string | null
+          status?: Database["public"]["Enums"]["txn_status"]
+          type?: Database["public"]["Enums"]["txn_type"]
+        }
+        Relationships: []
+      }
+      user_roles: {
+        Row: {
+          created_at: string
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
+      wallets: {
+        Row: {
+          balance: number
+          created_at: string
+          id: string
+          pin_hash: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          balance?: number
+          created_at?: string
+          id?: string
+          pin_hash?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          balance?: number
+          created_at?: string
+          id?: string
+          pin_hash?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      has_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
+      transfer_funds: {
+        Args: {
+          _account_ref?: string
+          _amount: number
+          _description?: string
+          _fee?: number
+          _recipient: string
+          _recipient_phone?: string
+          _sender: string
+          _shortcode?: string
+          _type: Database["public"]["Enums"]["txn_type"]
+        }
+        Returns: string
+      }
     }
     Enums: {
-      [_ in never]: never
+      app_role: "customer" | "agent" | "merchant" | "admin"
+      merchant_type: "till" | "paybill"
+      txn_status: "pending" | "completed" | "failed" | "reversed"
+      txn_type:
+        | "send_money"
+        | "receive_money"
+        | "withdraw_agent"
+        | "deposit_agent"
+        | "pay_till"
+        | "pay_bill"
+        | "buy_airtime"
+        | "mpesa_topup"
+        | "b2c_withdraw"
+        | "reversal"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -150,6 +380,22 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      app_role: ["customer", "agent", "merchant", "admin"],
+      merchant_type: ["till", "paybill"],
+      txn_status: ["pending", "completed", "failed", "reversed"],
+      txn_type: [
+        "send_money",
+        "receive_money",
+        "withdraw_agent",
+        "deposit_agent",
+        "pay_till",
+        "pay_bill",
+        "buy_airtime",
+        "mpesa_topup",
+        "b2c_withdraw",
+        "reversal",
+      ],
+    },
   },
 } as const
