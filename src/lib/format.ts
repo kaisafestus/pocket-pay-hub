@@ -31,3 +31,12 @@ export function timeAgo(date: string | Date): string {
   if (seconds < 86400) return `${Math.floor(seconds / 3600)}h ago`;
   return d.toLocaleDateString("en-KE", { day: "numeric", month: "short" });
 }
+
+/** Convert any thrown value (Error, Response, string, etc.) into a user-readable message. */
+export function errMsg(e: unknown): string {
+  if (!e) return "Something went wrong";
+  if (e instanceof Response) return `Request failed (${e.status})`;
+  if (e instanceof Error) return e.message || "Something went wrong";
+  if (typeof e === "string") return e;
+  try { return JSON.stringify(e); } catch { return "Something went wrong"; }
+}
