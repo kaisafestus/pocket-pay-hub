@@ -57,6 +57,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         loading,
         signOut: async () => {
           await supabase.auth.signOut();
+          try { localStorage.removeItem("mpesa.profile"); } catch { /* ignore */ }
         },
         refreshRoles,
       }}
