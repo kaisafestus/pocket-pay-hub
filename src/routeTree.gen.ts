@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AppRouteImport } from './routes/app'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AppIndexRouteImport } from './routes/app/index'
 import { Route as AppWithdrawRouteImport } from './routes/app/withdraw'
 import { Route as AppStatementRouteImport } from './routes/app/statement'
 import { Route as AppSendRouteImport } from './routes/app/send'
@@ -34,6 +35,11 @@ const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
+} as any)
+const AppIndexRoute = AppIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AppRoute,
 } as any)
 const AppWithdrawRoute = AppWithdrawRouteImport.update({
   id: '/withdraw',
@@ -82,10 +88,10 @@ export interface FileRoutesByFullPath {
   '/app/send': typeof AppSendRoute
   '/app/statement': typeof AppStatementRoute
   '/app/withdraw': typeof AppWithdrawRoute
+  '/app/': typeof AppIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
-  '/app': typeof AppRouteWithChildren
   '/auth': typeof AuthRoute
   '/app/account': typeof AppAccountRoute
   '/app/agent': typeof AppAgentRoute
@@ -94,6 +100,7 @@ export interface FileRoutesByTo {
   '/app/send': typeof AppSendRoute
   '/app/statement': typeof AppStatementRoute
   '/app/withdraw': typeof AppWithdrawRoute
+  '/app': typeof AppIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -107,6 +114,7 @@ export interface FileRoutesById {
   '/app/send': typeof AppSendRoute
   '/app/statement': typeof AppStatementRoute
   '/app/withdraw': typeof AppWithdrawRoute
+  '/app/': typeof AppIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -121,10 +129,10 @@ export interface FileRouteTypes {
     | '/app/send'
     | '/app/statement'
     | '/app/withdraw'
+    | '/app/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
-    | '/app'
     | '/auth'
     | '/app/account'
     | '/app/agent'
@@ -133,6 +141,7 @@ export interface FileRouteTypes {
     | '/app/send'
     | '/app/statement'
     | '/app/withdraw'
+    | '/app'
   id:
     | '__root__'
     | '/'
@@ -145,6 +154,7 @@ export interface FileRouteTypes {
     | '/app/send'
     | '/app/statement'
     | '/app/withdraw'
+    | '/app/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -175,6 +185,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/app/': {
+      id: '/app/'
+      path: '/'
+      fullPath: '/app/'
+      preLoaderRoute: typeof AppIndexRouteImport
+      parentRoute: typeof AppRoute
     }
     '/app/withdraw': {
       id: '/app/withdraw'
@@ -236,6 +253,7 @@ interface AppRouteChildren {
   AppSendRoute: typeof AppSendRoute
   AppStatementRoute: typeof AppStatementRoute
   AppWithdrawRoute: typeof AppWithdrawRoute
+  AppIndexRoute: typeof AppIndexRoute
 }
 
 const AppRouteChildren: AppRouteChildren = {
@@ -246,6 +264,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppSendRoute: AppSendRoute,
   AppStatementRoute: AppStatementRoute,
   AppWithdrawRoute: AppWithdrawRoute,
+  AppIndexRoute: AppIndexRoute,
 }
 
 const AppRouteWithChildren = AppRoute._addFileChildren(AppRouteChildren)
