@@ -60,7 +60,7 @@ function Dashboard() {
           </button>
         )}
 
-        <div className="grid grid-cols-4 gap-3">
+        <div className="grid grid-cols-3 gap-3">
           {actions.map((a) => (
             <Link key={a.to} to={a.to}
               className="flex flex-col items-center gap-2 rounded-2xl bg-card p-3 border hover:shadow-md transition"
