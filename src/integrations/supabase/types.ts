@@ -74,6 +74,39 @@ export type Database = {
         }
         Relationships: []
       }
+      messages: {
+        Row: {
+          body: string
+          created_at: string
+          id: string
+          link_label: string | null
+          link_url: string | null
+          read: boolean
+          ref_code: string | null
+          user_id: string
+        }
+        Insert: {
+          body: string
+          created_at?: string
+          id?: string
+          link_label?: string | null
+          link_url?: string | null
+          read?: boolean
+          ref_code?: string | null
+          user_id: string
+        }
+        Update: {
+          body?: string
+          created_at?: string
+          id?: string
+          link_label?: string | null
+          link_url?: string | null
+          read?: boolean
+          ref_code?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           created_at: string
@@ -217,6 +250,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      fmt_kes: { Args: { _n: number }; Returns: string }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]

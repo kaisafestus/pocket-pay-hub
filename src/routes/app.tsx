@@ -1,7 +1,7 @@
 import { createFileRoute, Outlet, Link, useNavigate, useRouterState } from "@tanstack/react-router";
 import { useEffect } from "react";
 import { useAuth } from "@/lib/auth";
-import { Loader2, Home, History, Store, Wallet, LogOut, User } from "lucide-react";
+import { Loader2, Home, History, Store, Wallet, LogOut, User, MessageSquare } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 
@@ -29,6 +29,7 @@ function AppLayout() {
   const tabs: { to: string; label: string; icon: typeof Home }[] = [
     { to: "/app", label: "Home", icon: Home },
     { to: "/app/statement", label: "Statement", icon: History },
+    { to: "/app/messages", label: "Messages", icon: MessageSquare },
     ...(roles.includes("merchant") ? [{ to: "/app/merchant", label: "Merchant", icon: Store }] : []),
     ...(roles.includes("agent") ? [{ to: "/app/agent", label: "Agent", icon: Wallet }] : []),
     { to: "/app/account", label: "Account", icon: User },

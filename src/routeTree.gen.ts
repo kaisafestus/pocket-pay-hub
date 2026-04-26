@@ -16,6 +16,7 @@ import { Route as AppIndexRouteImport } from './routes/app/index'
 import { Route as AppWithdrawRouteImport } from './routes/app/withdraw'
 import { Route as AppStatementRouteImport } from './routes/app/statement'
 import { Route as AppSendRouteImport } from './routes/app/send'
+import { Route as AppMessagesRouteImport } from './routes/app/messages'
 import { Route as AppMerchantRouteImport } from './routes/app/merchant'
 import { Route as AppLipaRouteImport } from './routes/app/lipa'
 import { Route as AppAgentRouteImport } from './routes/app/agent'
@@ -56,6 +57,11 @@ const AppSendRoute = AppSendRouteImport.update({
   path: '/send',
   getParentRoute: () => AppRoute,
 } as any)
+const AppMessagesRoute = AppMessagesRouteImport.update({
+  id: '/messages',
+  path: '/messages',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppMerchantRoute = AppMerchantRouteImport.update({
   id: '/merchant',
   path: '/merchant',
@@ -85,6 +91,7 @@ export interface FileRoutesByFullPath {
   '/app/agent': typeof AppAgentRoute
   '/app/lipa': typeof AppLipaRoute
   '/app/merchant': typeof AppMerchantRoute
+  '/app/messages': typeof AppMessagesRoute
   '/app/send': typeof AppSendRoute
   '/app/statement': typeof AppStatementRoute
   '/app/withdraw': typeof AppWithdrawRoute
@@ -97,6 +104,7 @@ export interface FileRoutesByTo {
   '/app/agent': typeof AppAgentRoute
   '/app/lipa': typeof AppLipaRoute
   '/app/merchant': typeof AppMerchantRoute
+  '/app/messages': typeof AppMessagesRoute
   '/app/send': typeof AppSendRoute
   '/app/statement': typeof AppStatementRoute
   '/app/withdraw': typeof AppWithdrawRoute
@@ -111,6 +119,7 @@ export interface FileRoutesById {
   '/app/agent': typeof AppAgentRoute
   '/app/lipa': typeof AppLipaRoute
   '/app/merchant': typeof AppMerchantRoute
+  '/app/messages': typeof AppMessagesRoute
   '/app/send': typeof AppSendRoute
   '/app/statement': typeof AppStatementRoute
   '/app/withdraw': typeof AppWithdrawRoute
@@ -126,6 +135,7 @@ export interface FileRouteTypes {
     | '/app/agent'
     | '/app/lipa'
     | '/app/merchant'
+    | '/app/messages'
     | '/app/send'
     | '/app/statement'
     | '/app/withdraw'
@@ -138,6 +148,7 @@ export interface FileRouteTypes {
     | '/app/agent'
     | '/app/lipa'
     | '/app/merchant'
+    | '/app/messages'
     | '/app/send'
     | '/app/statement'
     | '/app/withdraw'
@@ -151,6 +162,7 @@ export interface FileRouteTypes {
     | '/app/agent'
     | '/app/lipa'
     | '/app/merchant'
+    | '/app/messages'
     | '/app/send'
     | '/app/statement'
     | '/app/withdraw'
@@ -214,6 +226,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppSendRouteImport
       parentRoute: typeof AppRoute
     }
+    '/app/messages': {
+      id: '/app/messages'
+      path: '/messages'
+      fullPath: '/app/messages'
+      preLoaderRoute: typeof AppMessagesRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/app/merchant': {
       id: '/app/merchant'
       path: '/merchant'
@@ -250,6 +269,7 @@ interface AppRouteChildren {
   AppAgentRoute: typeof AppAgentRoute
   AppLipaRoute: typeof AppLipaRoute
   AppMerchantRoute: typeof AppMerchantRoute
+  AppMessagesRoute: typeof AppMessagesRoute
   AppSendRoute: typeof AppSendRoute
   AppStatementRoute: typeof AppStatementRoute
   AppWithdrawRoute: typeof AppWithdrawRoute
@@ -261,6 +281,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppAgentRoute: AppAgentRoute,
   AppLipaRoute: AppLipaRoute,
   AppMerchantRoute: AppMerchantRoute,
+  AppMessagesRoute: AppMessagesRoute,
   AppSendRoute: AppSendRoute,
   AppStatementRoute: AppStatementRoute,
   AppWithdrawRoute: AppWithdrawRoute,

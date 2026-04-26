@@ -303,8 +303,9 @@ function RegisterStage({ initialPhone, onBack, onDone }: { initialPhone: string;
           <PinEntry pin={confirm} setPin={setConfirm}
             error={error}
             busy={busy}
-            onComplete={() => {
-              const a = pin.join(""); const b = confirm.join("");
+            onComplete={(typed) => {
+              const a = pin.join("");
+              const b = typed ?? confirm.join("");
               if (a !== b) { setError("PINs don't match. Try again."); setConfirm(["", "", "", ""]); return; }
               void submit(a);
             }}
@@ -319,7 +320,7 @@ function PinEntry({
   pin, setPin, onComplete, error, busy,
 }: {
   pin: string[]; setPin: (p: string[]) => void;
-  onComplete: () => void; error?: string | null; busy?: boolean;
+  onComplete: (code: string) => void; error?: string | null; busy?: boolean;
 }) {
   const refs = useRef<(HTMLInputElement | null)[]>([]);
   useEffect(() => { refs.current[0]?.focus(); }, []);
@@ -328,8 +329,9 @@ function PinEntry({
     const c = v.replace(/\D/g, "").slice(-1);
     const next = [...pin]; next[i] = c; setPin(next);
     if (c && i < 3) refs.current[i + 1]?.focus();
-    if (next.every((d) => d) && next.join("").length === 4) {
-      setTimeout(onComplete, 100);
+    const code = next.join("");
+    if (code.length === 4 && next.every((d) => d)) {
+      setTimeout(() => onComplete(code), 100);
     }
   };
 

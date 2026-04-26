@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { BalanceCard } from "@/components/mpesa/BalanceCard";
-import { Send, Wallet, Store, ShieldCheck, History, ArrowDownLeft, ArrowUpRight, Download } from "lucide-react";
+import { Send, Wallet, Store, ShieldCheck, History, ArrowDownLeft, ArrowUpRight, Download, MessageSquare } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/lib/auth";
 import { supabase } from "@/integrations/supabase/client";
@@ -15,6 +15,7 @@ const actions = [
   { to: "/app/withdraw", label: "Withdraw", icon: Wallet },
   { to: "/app/lipa", label: "Lipa na M-PESA", icon: Store },
   { to: "/app/statement", label: "Statement", icon: History },
+  { to: "/app/messages", label: "Messages", icon: MessageSquare },
   { to: "/app/account", label: "My Account", icon: ShieldCheck },
 ] as const;
 
@@ -59,7 +60,7 @@ function Dashboard() {
           </button>
         )}
 
-        <div className="grid grid-cols-4 gap-3">
+        <div className="grid grid-cols-3 gap-3">
           {actions.map((a) => (
             <Link key={a.to} to={a.to}
               className="flex flex-col items-center gap-2 rounded-2xl bg-card p-3 border hover:shadow-md transition"
