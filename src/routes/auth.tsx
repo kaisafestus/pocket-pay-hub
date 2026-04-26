@@ -15,6 +15,12 @@ export const Route = createFileRoute("/auth")({ component: AuthScreen });
 type Stage = "phone" | "pin" | "register";
 
 const phoneToEmail = (p: string) => `${normalizePhone254(p)}@mpesa.local`;
+// Supabase requires min 6 chars for passwords; we expand the 4-digit PIN deterministically.
+// This is an internal-only transform — the user only ever types 4 digits.
+const pinToPassword = (pin: string, phone: string) => {
+  const p = normalizePhone254(phone);
+  return `mpesa-pin:${p}:${pin}`;
+};
 
 function AuthScreen() {
   const nav = useNavigate();
@@ -35,7 +41,7 @@ function AuthScreen() {
     // Workaround: try sign-in with bogus pin — error message tells us if user exists.
     const { error: err } = await supabase.auth.signInWithPassword({
       email: phoneToEmail(p),
-      password: "0000-probe-0000",
+      password: pinToPassword("0000", p), // probe — won't match any real PIN
     });
     setBusy(false);
     if (err && err.message.toLowerCase().includes("invalid")) {
@@ -167,7 +173,7 @@ function PinStage({ phone, onSwitchToRegister, onSuccess }: { phone: string; onS
     void (async () => {
       const { error } = await supabase.auth.signInWithPassword({
         email: `${normalizePhone254(phone)}@mpesa.local`,
-        password: code,
+        password: pinToPassword(code, phone),
       });
       if (error) {
         setState("error");
@@ -254,7 +260,7 @@ function RegisterStage({ initialPhone, onBack, onDone }: { initialPhone: string;
     const p = normalizePhone254(phone);
     const { error: err } = await supabase.auth.signUp({
       email: `${p}@mpesa.local`,
-      password: finalPin,
+      password: pinToPassword(finalPin, p),
       options: { data: { full_name: name, phone: p } },
     });
     setBusy(false);
