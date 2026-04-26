@@ -10,7 +10,7 @@ import { useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { agentDeposit } from "@/server/wallet.functions";
 import { toast } from "sonner";
-import { formatKES } from "@/lib/format";
+import { formatKES , errMsg} from "@/lib/format";
 
 export const Route = createFileRoute("/app/agent")({ component: AgentDashboard });
 
@@ -44,7 +44,7 @@ function AgentDashboard() {
       const r = await fn({ data: { customerPhone: phone, amount: amt } });
       toast.success(`Deposited ${formatKES(amt)} to ${r.customer}`);
       setPhone(""); setAmount(""); qc.invalidateQueries();
-    } catch (e) { toast.error((e as Error).message); }
+    } catch (e) { toast.error(errMsg(e)); }
   };
 
   return (
