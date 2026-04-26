@@ -197,7 +197,11 @@ function PhoneStage({
   );
 }
 
-function PinStage({ phone, onSwitchToRegister, onSuccess }: { phone: string; onSwitchToRegister: () => void; onSuccess: () => void }) {
+function PinStage({ phone, onSwitchToRegister, onSuccess }: {
+  phone: string;
+  onSwitchToRegister: () => void;
+  onSuccess: (name: string | null) => void;
+}) {
   const [pin, setPin] = useState<string[]>(["", "", "", ""]);
   const [state, setState] = useState<"idle" | "checking" | "success" | "error">("idle");
   const [attempts, setAttempts] = useState(0);
@@ -222,7 +226,7 @@ function PinStage({ phone, onSwitchToRegister, onSuccess }: { phone: string; onS
     if (code.length !== 4 || state === "checking") return;
     setState("checking");
     void (async () => {
-      const { error } = await supabase.auth.signInWithPassword({
+      const { data: signInData, error } = await supabase.auth.signInWithPassword({
         email: `${normalizePhone254(phone)}@mpesa.local`,
         password: pinToPassword(code, phone),
       });
@@ -236,7 +240,14 @@ function PinStage({ phone, onSwitchToRegister, onSuccess }: { phone: string; onS
         }, 700);
       } else {
         setState("success");
-        setTimeout(onSuccess, 400);
+        // Fetch profile name to cache for next login.
+        let name: string | null = null;
+        const uid = signInData.user?.id;
+        if (uid) {
+          const { data: prof } = await supabase.from("profiles").select("full_name").eq("id", uid).maybeSingle();
+          name = prof?.full_name ?? null;
+        }
+        setTimeout(() => onSuccess(name), 400);
       }
     })();
   }, [pin, state, phone, onSuccess]);
