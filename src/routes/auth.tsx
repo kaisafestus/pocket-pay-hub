@@ -5,14 +5,30 @@ import { useAuth } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Loader2, ArrowLeft, Smartphone } from "lucide-react";
+import { Loader2, ArrowLeft, Smartphone, User } from "lucide-react";
 import { normalizePhone254, formatPhone } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import { useInstall } from "@/lib/pwa";
 
 export const Route = createFileRoute("/auth")({ component: AuthScreen });
 
-type Stage = "phone" | "pin" | "register";
+type Stage = "welcome" | "phone" | "pin" | "register";
+
+type SavedProfile = { phone: string; name: string };
+const PROFILE_KEY = "mpesa.profile";
+const loadProfile = (): SavedProfile | null => {
+  if (typeof window === "undefined") return null;
+  try {
+    const raw = localStorage.getItem(PROFILE_KEY);
+    return raw ? (JSON.parse(raw) as SavedProfile) : null;
+  } catch { return null; }
+};
+const saveProfile = (p: SavedProfile) => {
+  try { localStorage.setItem(PROFILE_KEY, JSON.stringify(p)); } catch { /* ignore */ }
+};
+const clearProfile = () => {
+  try { localStorage.removeItem(PROFILE_KEY); } catch { /* ignore */ }
+};
 
 const phoneToEmail = (p: string) => `${normalizePhone254(p)}@mpesa.local`;
 // Supabase requires min 6 chars for passwords; we expand the 4-digit PIN deterministically.
@@ -25,10 +41,21 @@ const pinToPassword = (pin: string, phone: string) => {
 function AuthScreen() {
   const nav = useNavigate();
   const { user, loading } = useAuth();
+  const [savedProfile, setSavedProfile] = useState<SavedProfile | null>(null);
   const [stage, setStage] = useState<Stage>("phone");
   const [phone, setPhone] = useState("");
   const [fullName, setFullName] = useState("");
   const [busy, setBusy] = useState(false);
+
+  // Initialise from localStorage on mount.
+  useEffect(() => {
+    const p = loadProfile();
+    if (p) {
+      setSavedProfile(p);
+      setPhone(p.phone);
+      setStage("welcome");
+    }
+  }, []);
 
   useEffect(() => { if (!loading && user) nav({ to: "/app" }); }, [loading, user, nav]);
 
@@ -62,7 +89,25 @@ function AuthScreen() {
   return (
     <div className="min-h-screen flex flex-col" style={{ background: "var(--gradient-hero)" }}>
       <div className="flex-1 flex flex-col">
-        <Header onBack={stage !== "phone" ? () => { setStage("phone"); setError(null); } : undefined} />
+        <Header onBack={
+          stage === "welcome" || stage === "phone"
+            ? undefined
+            : () => { setStage(savedProfile ? "welcome" : "phone"); setError(null); }
+        } />
+
+        {stage === "welcome" && savedProfile && (
+          <WelcomeBackStage
+            profile={savedProfile}
+            onSwitchAccount={() => {
+              clearProfile();
+              setSavedProfile(null);
+              setPhone("");
+              setStage("phone");
+            }}
+            onSuccess={() => nav({ to: "/app" })}
+            onSwitchToRegister={() => setStage("register")}
+          />
+        )}
 
         {stage === "phone" && (
           <PhoneStage
@@ -79,7 +124,10 @@ function AuthScreen() {
           <PinStage
             phone={phone}
             onSwitchToRegister={() => setStage("register")}
-            onSuccess={() => nav({ to: "/app" })}
+            onSuccess={(name) => {
+              saveProfile({ phone: normalizePhone254(phone), name: name ?? "" });
+              nav({ to: "/app" });
+            }}
           />
         )}
 
@@ -87,7 +135,10 @@ function AuthScreen() {
           <RegisterStage
             initialPhone={phone}
             onBack={() => setStage("phone")}
-            onDone={() => nav({ to: "/app" })}
+            onDone={(reg) => {
+              saveProfile({ phone: normalizePhone254(reg.phone), name: reg.name });
+              nav({ to: "/app" });
+            }}
           />
         )}
       </div>
