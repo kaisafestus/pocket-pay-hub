@@ -9,7 +9,7 @@ import { sendMoney } from "@/server/wallet.functions";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
-import { formatKES } from "@/lib/format";
+import { formatKES , errMsg} from "@/lib/format";
 
 export const Route = createFileRoute("/app/send")({ component: SendPage });
 
@@ -34,7 +34,7 @@ function SendPage() {
       nav({ to: "/app" });
       void r;
     } catch (e) {
-      toast.error((e as Error).message);
+      toast.error(errMsg(e));
     }
   };
 

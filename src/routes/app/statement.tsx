@@ -3,7 +3,7 @@ import { AppHeader } from "@/components/mpesa/AppHeader";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
-import { formatKES, timeAgo } from "@/lib/format";
+import { formatKES, timeAgo , errMsg} from "@/lib/format";
 import { ArrowDownLeft, ArrowUpRight, Undo2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -33,7 +33,7 @@ function StatementPage() {
       await reverse({ data: { txnId: id } });
       toast.success("Transaction reversed");
       qc.invalidateQueries();
-    } catch (e) { toast.error((e as Error).message); }
+    } catch (e) { toast.error(errMsg(e)); }
   };
 
   return (

@@ -10,7 +10,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { formatKES } from "@/lib/format";
+import { formatKES , errMsg} from "@/lib/format";
 
 export const Route = createFileRoute("/app/withdraw")({ component: WithdrawPage });
 
@@ -41,7 +41,7 @@ function WithdrawPage() {
       setOpen(false);
       nav({ to: "/app" });
     } catch (e) {
-      toast.error((e as Error).message);
+      toast.error(errMsg(e));
     }
   };
 

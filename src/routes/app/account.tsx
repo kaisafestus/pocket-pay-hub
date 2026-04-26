@@ -12,7 +12,7 @@ import { setPin, becomeAgent, becomeMerchant } from "@/server/wallet.functions";
 import { toast } from "sonner";
 import { Dialog, DialogTrigger, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { ShieldCheck, Store, Wallet, LogOut, KeyRound } from "lucide-react";
-import { formatPhone } from "@/lib/format";
+import { formatPhone , errMsg} from "@/lib/format";
 
 export const Route = createFileRoute("/app/account")({ component: AccountPage });
 
@@ -102,7 +102,7 @@ function PinManager({ hasPin, onDone }: { hasPin: boolean; onDone: () => void })
       toast.success(hasPin ? "PIN changed" : "PIN set");
       setOpen(false); setPin1(""); setPin2(""); setCurrent("");
       onDone();
-    } catch (e) { toast.error((e as Error).message); }
+    } catch (e) { toast.error(errMsg(e)); }
   };
 
   return (
@@ -140,7 +140,7 @@ function BecomeAgent({ onDone }: { onDone: () => void }) {
       const r = await fn({ data: { storeName: name, location: loc } });
       toast.success(`You are now an agent. Number: ${r.agentNumber}`);
       setOpen(false); onDone();
-    } catch (e) { toast.error((e as Error).message); }
+    } catch (e) { toast.error(errMsg(e)); }
   };
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -171,7 +171,7 @@ function BecomeMerchant({ onDone }: { onDone: () => void }) {
       const r = await fn({ data: { businessName: name, type, category: cat } });
       toast.success(`Merchant registered. Shortcode: ${r.shortcode}`);
       setOpen(false); onDone();
-    } catch (e) { toast.error((e as Error).message); }
+    } catch (e) { toast.error(errMsg(e)); }
   };
   return (
     <Dialog open={open} onOpenChange={setOpen}>

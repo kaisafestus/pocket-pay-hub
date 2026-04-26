@@ -42,8 +42,14 @@ export const setPin = createServerFn({ method: "POST" })
 async function verifyPin(userId: string, pin: string) {
   const sb = admin();
   const { data } = await sb.from("wallets").select("pin_hash").eq("user_id", userId).single();
-  if (!data?.pin_hash) throw new Error("Set your M-PESA PIN first (Account → Change PIN)");
-  if (!bcrypt.compareSync(pin, data.pin_hash)) throw new Error("Incorrect PIN");
+  if (!data?.pin_hash) {
+    // First transaction — adopt the entered PIN as the canonical M-PESA PIN.
+    // (Same PIN they used to register / sign in, so this is seamless.)
+    const hash = bcrypt.hashSync(pin, 10);
+    await sb.from("wallets").update({ pin_hash: hash }).eq("user_id", userId);
+    return;
+  }
+  if (!bcrypt.compareSync(pin, data.pin_hash)) throw new Error("Incorrect M-PESA PIN");
 }
 
 /* ================= SEND MONEY ================= */

@@ -10,7 +10,7 @@ import { payTill, payBill } from "@/server/wallet.functions";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
-import { formatKES } from "@/lib/format";
+import { formatKES , errMsg} from "@/lib/format";
 
 export const Route = createFileRoute("/app/lipa")({ component: LipaPage });
 
@@ -44,7 +44,7 @@ function TillForm() {
       const r = await fn({ data: { till, amount: amt, pin } });
       toast.success(`Paid ${formatKES(amt)} to ${r.business}`);
       qc.invalidateQueries(); setOpen(false); nav({ to: "/app" });
-    } catch (e) { toast.error((e as Error).message); }
+    } catch (e) { toast.error(errMsg(e)); }
   };
 
   return (
@@ -68,7 +68,7 @@ function PaybillForm() {
       const r = await fn({ data: { paybill, account, amount: amt, pin } });
       toast.success(`Paid ${formatKES(amt)} to ${r.business}`);
       qc.invalidateQueries(); setOpen(false); nav({ to: "/app" });
-    } catch (e) { toast.error((e as Error).message); }
+    } catch (e) { toast.error(errMsg(e)); }
   };
 
   return (
