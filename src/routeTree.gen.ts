@@ -14,16 +14,12 @@ import { Route as AppRouteImport } from './routes/app'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AppIndexRouteImport } from './routes/app/index'
 import { Route as AppWithdrawRouteImport } from './routes/app/withdraw'
-import { Route as AppTopupRouteImport } from './routes/app/topup'
 import { Route as AppStatementRouteImport } from './routes/app/statement'
 import { Route as AppSendRouteImport } from './routes/app/send'
 import { Route as AppMerchantRouteImport } from './routes/app/merchant'
-import { Route as AppLoansRouteImport } from './routes/app/loans'
 import { Route as AppLipaRouteImport } from './routes/app/lipa'
-import { Route as AppAirtimeRouteImport } from './routes/app/airtime'
 import { Route as AppAgentRouteImport } from './routes/app/agent'
 import { Route as AppAccountRouteImport } from './routes/app/account'
-import { Route as ApiPublicMpesaStkCallbackRouteImport } from './routes/api/public/mpesa/stk-callback'
 
 const AuthRoute = AuthRouteImport.update({
   id: '/auth',
@@ -50,11 +46,6 @@ const AppWithdrawRoute = AppWithdrawRouteImport.update({
   path: '/withdraw',
   getParentRoute: () => AppRoute,
 } as any)
-const AppTopupRoute = AppTopupRouteImport.update({
-  id: '/topup',
-  path: '/topup',
-  getParentRoute: () => AppRoute,
-} as any)
 const AppStatementRoute = AppStatementRouteImport.update({
   id: '/statement',
   path: '/statement',
@@ -70,19 +61,9 @@ const AppMerchantRoute = AppMerchantRouteImport.update({
   path: '/merchant',
   getParentRoute: () => AppRoute,
 } as any)
-const AppLoansRoute = AppLoansRouteImport.update({
-  id: '/loans',
-  path: '/loans',
-  getParentRoute: () => AppRoute,
-} as any)
 const AppLipaRoute = AppLipaRouteImport.update({
   id: '/lipa',
   path: '/lipa',
-  getParentRoute: () => AppRoute,
-} as any)
-const AppAirtimeRoute = AppAirtimeRouteImport.update({
-  id: '/airtime',
-  path: '/airtime',
   getParentRoute: () => AppRoute,
 } as any)
 const AppAgentRoute = AppAgentRouteImport.update({
@@ -95,12 +76,6 @@ const AppAccountRoute = AppAccountRouteImport.update({
   path: '/account',
   getParentRoute: () => AppRoute,
 } as any)
-const ApiPublicMpesaStkCallbackRoute =
-  ApiPublicMpesaStkCallbackRouteImport.update({
-    id: '/api/public/mpesa/stk-callback',
-    path: '/api/public/mpesa/stk-callback',
-    getParentRoute: () => rootRouteImport,
-  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -108,32 +83,24 @@ export interface FileRoutesByFullPath {
   '/auth': typeof AuthRoute
   '/app/account': typeof AppAccountRoute
   '/app/agent': typeof AppAgentRoute
-  '/app/airtime': typeof AppAirtimeRoute
   '/app/lipa': typeof AppLipaRoute
-  '/app/loans': typeof AppLoansRoute
   '/app/merchant': typeof AppMerchantRoute
   '/app/send': typeof AppSendRoute
   '/app/statement': typeof AppStatementRoute
-  '/app/topup': typeof AppTopupRoute
   '/app/withdraw': typeof AppWithdrawRoute
   '/app/': typeof AppIndexRoute
-  '/api/public/mpesa/stk-callback': typeof ApiPublicMpesaStkCallbackRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/app/account': typeof AppAccountRoute
   '/app/agent': typeof AppAgentRoute
-  '/app/airtime': typeof AppAirtimeRoute
   '/app/lipa': typeof AppLipaRoute
-  '/app/loans': typeof AppLoansRoute
   '/app/merchant': typeof AppMerchantRoute
   '/app/send': typeof AppSendRoute
   '/app/statement': typeof AppStatementRoute
-  '/app/topup': typeof AppTopupRoute
   '/app/withdraw': typeof AppWithdrawRoute
   '/app': typeof AppIndexRoute
-  '/api/public/mpesa/stk-callback': typeof ApiPublicMpesaStkCallbackRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -142,16 +109,12 @@ export interface FileRoutesById {
   '/auth': typeof AuthRoute
   '/app/account': typeof AppAccountRoute
   '/app/agent': typeof AppAgentRoute
-  '/app/airtime': typeof AppAirtimeRoute
   '/app/lipa': typeof AppLipaRoute
-  '/app/loans': typeof AppLoansRoute
   '/app/merchant': typeof AppMerchantRoute
   '/app/send': typeof AppSendRoute
   '/app/statement': typeof AppStatementRoute
-  '/app/topup': typeof AppTopupRoute
   '/app/withdraw': typeof AppWithdrawRoute
   '/app/': typeof AppIndexRoute
-  '/api/public/mpesa/stk-callback': typeof ApiPublicMpesaStkCallbackRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -161,32 +124,24 @@ export interface FileRouteTypes {
     | '/auth'
     | '/app/account'
     | '/app/agent'
-    | '/app/airtime'
     | '/app/lipa'
-    | '/app/loans'
     | '/app/merchant'
     | '/app/send'
     | '/app/statement'
-    | '/app/topup'
     | '/app/withdraw'
     | '/app/'
-    | '/api/public/mpesa/stk-callback'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
     | '/auth'
     | '/app/account'
     | '/app/agent'
-    | '/app/airtime'
     | '/app/lipa'
-    | '/app/loans'
     | '/app/merchant'
     | '/app/send'
     | '/app/statement'
-    | '/app/topup'
     | '/app/withdraw'
     | '/app'
-    | '/api/public/mpesa/stk-callback'
   id:
     | '__root__'
     | '/'
@@ -194,23 +149,18 @@ export interface FileRouteTypes {
     | '/auth'
     | '/app/account'
     | '/app/agent'
-    | '/app/airtime'
     | '/app/lipa'
-    | '/app/loans'
     | '/app/merchant'
     | '/app/send'
     | '/app/statement'
-    | '/app/topup'
     | '/app/withdraw'
     | '/app/'
-    | '/api/public/mpesa/stk-callback'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AppRoute: typeof AppRouteWithChildren
   AuthRoute: typeof AuthRoute
-  ApiPublicMpesaStkCallbackRoute: typeof ApiPublicMpesaStkCallbackRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -250,13 +200,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppWithdrawRouteImport
       parentRoute: typeof AppRoute
     }
-    '/app/topup': {
-      id: '/app/topup'
-      path: '/topup'
-      fullPath: '/app/topup'
-      preLoaderRoute: typeof AppTopupRouteImport
-      parentRoute: typeof AppRoute
-    }
     '/app/statement': {
       id: '/app/statement'
       path: '/statement'
@@ -278,25 +221,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppMerchantRouteImport
       parentRoute: typeof AppRoute
     }
-    '/app/loans': {
-      id: '/app/loans'
-      path: '/loans'
-      fullPath: '/app/loans'
-      preLoaderRoute: typeof AppLoansRouteImport
-      parentRoute: typeof AppRoute
-    }
     '/app/lipa': {
       id: '/app/lipa'
       path: '/lipa'
       fullPath: '/app/lipa'
       preLoaderRoute: typeof AppLipaRouteImport
-      parentRoute: typeof AppRoute
-    }
-    '/app/airtime': {
-      id: '/app/airtime'
-      path: '/airtime'
-      fullPath: '/app/airtime'
-      preLoaderRoute: typeof AppAirtimeRouteImport
       parentRoute: typeof AppRoute
     }
     '/app/agent': {
@@ -313,26 +242,16 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppAccountRouteImport
       parentRoute: typeof AppRoute
     }
-    '/api/public/mpesa/stk-callback': {
-      id: '/api/public/mpesa/stk-callback'
-      path: '/api/public/mpesa/stk-callback'
-      fullPath: '/api/public/mpesa/stk-callback'
-      preLoaderRoute: typeof ApiPublicMpesaStkCallbackRouteImport
-      parentRoute: typeof rootRouteImport
-    }
   }
 }
 
 interface AppRouteChildren {
   AppAccountRoute: typeof AppAccountRoute
   AppAgentRoute: typeof AppAgentRoute
-  AppAirtimeRoute: typeof AppAirtimeRoute
   AppLipaRoute: typeof AppLipaRoute
-  AppLoansRoute: typeof AppLoansRoute
   AppMerchantRoute: typeof AppMerchantRoute
   AppSendRoute: typeof AppSendRoute
   AppStatementRoute: typeof AppStatementRoute
-  AppTopupRoute: typeof AppTopupRoute
   AppWithdrawRoute: typeof AppWithdrawRoute
   AppIndexRoute: typeof AppIndexRoute
 }
@@ -340,13 +259,10 @@ interface AppRouteChildren {
 const AppRouteChildren: AppRouteChildren = {
   AppAccountRoute: AppAccountRoute,
   AppAgentRoute: AppAgentRoute,
-  AppAirtimeRoute: AppAirtimeRoute,
   AppLipaRoute: AppLipaRoute,
-  AppLoansRoute: AppLoansRoute,
   AppMerchantRoute: AppMerchantRoute,
   AppSendRoute: AppSendRoute,
   AppStatementRoute: AppStatementRoute,
-  AppTopupRoute: AppTopupRoute,
   AppWithdrawRoute: AppWithdrawRoute,
   AppIndexRoute: AppIndexRoute,
 }
@@ -357,7 +273,6 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AppRoute: AppRouteWithChildren,
   AuthRoute: AuthRoute,
-  ApiPublicMpesaStkCallbackRoute: ApiPublicMpesaStkCallbackRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
