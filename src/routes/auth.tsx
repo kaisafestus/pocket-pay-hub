@@ -308,7 +308,11 @@ function PinStage({ phone, onSwitchToRegister, onSuccess }: {
   );
 }
 
-function RegisterStage({ initialPhone, onBack, onDone }: { initialPhone: string; onBack: () => void; onDone: () => void }) {
+function RegisterStage({ initialPhone, onBack, onDone }: {
+  initialPhone: string;
+  onBack: () => void;
+  onDone: (reg: { phone: string; name: string }) => void;
+}) {
   const [name, setName] = useState("");
   const [phone, setPhone] = useState(initialPhone);
   const [pin, setPin] = useState<string[]>(["", "", "", ""]);
@@ -331,7 +335,7 @@ function RegisterStage({ initialPhone, onBack, onDone }: { initialPhone: string;
       setStep("info");
       return;
     }
-    onDone();
+    onDone({ phone: p, name });
   };
 
   return (
