@@ -433,6 +433,123 @@ function PinEntry({
 }
 
 function InstallFooter() {
+  return _InstallFooterImpl();
+}
+
+function WelcomeBackStage({
+  profile, onSwitchAccount, onSuccess, onSwitchToRegister,
+}: {
+  profile: SavedProfile;
+  onSwitchAccount: () => void;
+  onSuccess: () => void;
+  onSwitchToRegister: () => void;
+}) {
+  const [pin, setPin] = useState<string[]>(["", "", "", ""]);
+  const [state, setState] = useState<"idle" | "checking" | "success" | "error">("idle");
+  const [attempts, setAttempts] = useState(0);
+  const refs = useRef<(HTMLInputElement | null)[]>([]);
+
+  const setDigit = (i: number, v: string) => {
+    const c = v.replace(/\D/g, "").slice(-1);
+    setPin((prev) => { const next = [...prev]; next[i] = c; return next; });
+    if (c && i < 3) refs.current[i + 1]?.focus();
+  };
+  const onKey = (i: number, e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Backspace" && !pin[i] && i > 0) refs.current[i - 1]?.focus();
+  };
+
+  useEffect(() => { refs.current[0]?.focus(); }, []);
+
+  useEffect(() => {
+    const code = pin.join("");
+    if (code.length !== 4 || state === "checking") return;
+    setState("checking");
+    void (async () => {
+      const { error } = await supabase.auth.signInWithPassword({
+        email: phoneToEmail(profile.phone),
+        password: pinToPassword(code, profile.phone),
+      });
+      if (error) {
+        setState("error");
+        setAttempts((n) => n + 1);
+        setTimeout(() => {
+          setPin(["", "", "", ""]);
+          setState("idle");
+          refs.current[0]?.focus();
+        }, 700);
+      } else {
+        setState("success");
+        setTimeout(onSuccess, 400);
+      }
+    })();
+  }, [pin, state, profile.phone, onSuccess]);
+
+  const initials = profile.name
+    .split(/\s+/).filter(Boolean).slice(0, 2).map((s) => s[0]?.toUpperCase()).join("") || "M";
+  const firstName = profile.name.split(/\s+/)[0] || "there";
+
+  return (
+    <div className="flex-1 flex flex-col px-6 pt-10">
+      <div className="text-primary-foreground text-center">
+        <div className="h-24 w-24 mx-auto rounded-full bg-primary-foreground text-primary grid place-items-center text-3xl font-bold shadow-2xl ring-4 ring-primary-foreground/20">
+          {initials || <User className="h-10 w-10" />}
+        </div>
+        <h1 className="text-2xl font-bold mt-5">Hi, {firstName}</h1>
+        <p className="text-sm opacity-90 mt-1">{profile.name}</p>
+        <p className="text-xs opacity-70 mt-0.5">{formatPhone(profile.phone)}</p>
+        <p className="text-sm opacity-80 mt-5">Enter your M-PESA PIN to continue</p>
+      </div>
+
+      <div className="mt-8 flex justify-center gap-3">
+        {pin.map((d, i) => {
+          const filled = !!d;
+          const color =
+            state === "success" ? "border-success bg-success text-success-foreground" :
+            state === "error" ? "border-destructive bg-destructive text-destructive-foreground animate-[shake_0.4s]" :
+            filled ? "border-primary-foreground bg-primary-foreground text-primary" :
+            "border-primary-foreground/40 bg-primary-foreground/10 text-primary-foreground";
+          return (
+            <input
+              key={i}
+              ref={(el) => { refs.current[i] = el; }}
+              type="password" inputMode="numeric" maxLength={1}
+              value={d}
+              onChange={(e) => setDigit(i, e.target.value)}
+              onKeyDown={(e) => onKey(i, e)}
+              disabled={state === "checking" || state === "success"}
+              className={cn(
+                "h-16 w-14 text-center text-2xl font-bold rounded-2xl border-2 transition-all outline-none caret-transparent",
+                color,
+              )}
+            />
+          );
+        })}
+      </div>
+
+      <p className={cn("text-center text-sm mt-6 transition-colors",
+        state === "error" ? "text-destructive-foreground bg-destructive/40 mx-auto px-3 py-1 rounded-full" :
+        "text-primary-foreground/80")}>
+        {state === "checking" && "Verifying…"}
+        {state === "success" && "✓ Welcome back"}
+        {state === "error" && "Wrong PIN. Try again."}
+        {state === "idle" && "Enter your 4-digit M-PESA PIN"}
+      </p>
+
+      <div className="mt-auto pt-8 pb-2 flex flex-col items-center gap-3">
+        <button onClick={onSwitchAccount} className="text-sm text-primary-foreground/90 underline">
+          Not you? Use a different account
+        </button>
+        {attempts >= 2 && state !== "success" && (
+          <button onClick={onSwitchToRegister} className="text-xs text-primary-foreground/70 underline">
+            Forgot PIN? Create a new account
+          </button>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function _InstallFooterImpl() {
   const { canInstall, isInstalled, promptInstall } = useInstall();
   if (isInstalled || !canInstall) return null;
   return (
