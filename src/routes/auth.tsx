@@ -207,7 +207,7 @@ function PinStage({ phone, onSwitchToRegister, onSuccess }: { phone: string; onS
           return (
             <input
               key={i}
-              ref={(el) => (inputs.current[i] = el)}
+              ref={(el) => { inputs.current[i] = el; }}
               type="password" inputMode="numeric" maxLength={1}
               value={d}
               onChange={(e) => setDigit(i, e.target.value)}
@@ -339,7 +339,7 @@ function PinEntry({
         {pin.map((d, i) => (
           <input
             key={i}
-            ref={(el) => (refs.current[i] = el)}
+            ref={(el) => { refs.current[i] = el; }}
             type="password" inputMode="numeric" maxLength={1}
             value={d}
             onChange={(e) => setDigit(i, e.target.value)}

@@ -9,7 +9,9 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AppRouteImport } from './routes/app'
+import { Route as IndexRouteImport } from './routes/index'
 import { Route as AppWithdrawRouteImport } from './routes/app/withdraw'
 import { Route as AppStatementRouteImport } from './routes/app/statement'
 import { Route as AppSendRouteImport } from './routes/app/send'
@@ -18,9 +20,19 @@ import { Route as AppLipaRouteImport } from './routes/app/lipa'
 import { Route as AppAgentRouteImport } from './routes/app/agent'
 import { Route as AppAccountRouteImport } from './routes/app/account'
 
+const AuthRoute = AuthRouteImport.update({
+  id: '/auth',
+  path: '/auth',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AppRoute = AppRouteImport.update({
   id: '/app',
   path: '/app',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const IndexRoute = IndexRouteImport.update({
+  id: '/',
+  path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AppWithdrawRoute = AppWithdrawRouteImport.update({
@@ -60,7 +72,9 @@ const AppAccountRoute = AppAccountRouteImport.update({
 } as any)
 
 export interface FileRoutesByFullPath {
+  '/': typeof IndexRoute
   '/app': typeof AppRouteWithChildren
+  '/auth': typeof AuthRoute
   '/app/account': typeof AppAccountRoute
   '/app/agent': typeof AppAgentRoute
   '/app/lipa': typeof AppLipaRoute
@@ -70,7 +84,9 @@ export interface FileRoutesByFullPath {
   '/app/withdraw': typeof AppWithdrawRoute
 }
 export interface FileRoutesByTo {
+  '/': typeof IndexRoute
   '/app': typeof AppRouteWithChildren
+  '/auth': typeof AuthRoute
   '/app/account': typeof AppAccountRoute
   '/app/agent': typeof AppAgentRoute
   '/app/lipa': typeof AppLipaRoute
@@ -81,7 +97,9 @@ export interface FileRoutesByTo {
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
+  '/': typeof IndexRoute
   '/app': typeof AppRouteWithChildren
+  '/auth': typeof AuthRoute
   '/app/account': typeof AppAccountRoute
   '/app/agent': typeof AppAgentRoute
   '/app/lipa': typeof AppLipaRoute
@@ -93,7 +111,9 @@ export interface FileRoutesById {
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
+    | '/'
     | '/app'
+    | '/auth'
     | '/app/account'
     | '/app/agent'
     | '/app/lipa'
@@ -103,7 +123,9 @@ export interface FileRouteTypes {
     | '/app/withdraw'
   fileRoutesByTo: FileRoutesByTo
   to:
+    | '/'
     | '/app'
+    | '/auth'
     | '/app/account'
     | '/app/agent'
     | '/app/lipa'
@@ -113,7 +135,9 @@ export interface FileRouteTypes {
     | '/app/withdraw'
   id:
     | '__root__'
+    | '/'
     | '/app'
+    | '/auth'
     | '/app/account'
     | '/app/agent'
     | '/app/lipa'
@@ -124,16 +148,32 @@ export interface FileRouteTypes {
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
+  IndexRoute: typeof IndexRoute
   AppRoute: typeof AppRouteWithChildren
+  AuthRoute: typeof AuthRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/auth': {
+      id: '/auth'
+      path: '/auth'
+      fullPath: '/auth'
+      preLoaderRoute: typeof AuthRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/app': {
       id: '/app'
       path: '/app'
       fullPath: '/app'
       preLoaderRoute: typeof AppRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/': {
+      id: '/'
+      path: '/'
+      fullPath: '/'
+      preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/app/withdraw': {
@@ -211,7 +251,9 @@ const AppRouteChildren: AppRouteChildren = {
 const AppRouteWithChildren = AppRoute._addFileChildren(AppRouteChildren)
 
 const rootRouteChildren: RootRouteChildren = {
+  IndexRoute: IndexRoute,
   AppRoute: AppRouteWithChildren,
+  AuthRoute: AuthRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
