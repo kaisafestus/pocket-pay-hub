@@ -1,7 +1,8 @@
 import { Outlet, Link, createRootRoute, HeadContent, Scripts } from "@tanstack/react-router";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { AuthProvider } from "@/lib/auth";
+import { PwaProvider } from "@/lib/pwa";
 import { Toaster } from "@/components/ui/sonner";
 
 import appCss from "../styles.css?url";
@@ -32,19 +33,20 @@ export const Route = createRootRoute({
   head: () => ({
     meta: [
       { charSet: "utf-8" },
-      { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "M-Pesa Lite — Send, Pay, Withdraw" },
-      { name: "description", content: "A working M-Pesa-style wallet powered by Safaricom Daraja API. Send money, pay Till & Paybill, top up via STK Push." },
-      { property: "og:title", content: "M-Pesa Lite — Mobile Money" },
-      { property: "og:description", content: "Send, pay and withdraw — powered by Safaricom Daraja." },
-      { property: "og:type", content: "website" },
-      { name: "twitter:card", content: "summary" },
+      { name: "viewport", content: "width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no" },
+      { title: "M-PESA" },
+      { name: "description", content: "M-PESA mobile money — send, pay, withdraw." },
+      { name: "theme-color", content: "#0b6b3a" },
+      { name: "apple-mobile-web-app-capable", content: "yes" },
+      { name: "apple-mobile-web-app-status-bar-style", content: "black-translucent" },
+      { name: "apple-mobile-web-app-title", content: "M-PESA" },
+      { name: "mobile-web-app-capable", content: "yes" },
     ],
     links: [
-      {
-        rel: "stylesheet",
-        href: appCss,
-      },
+      { rel: "stylesheet", href: appCss },
+      { rel: "manifest", href: "/manifest.webmanifest" },
+      { rel: "apple-touch-icon", href: "/icon-192.png" },
+      { rel: "icon", href: "/icon-192.png", type: "image/png" },
     ],
   }),
   shellComponent: RootShell,
@@ -68,11 +70,24 @@ function RootShell({ children }: { children: React.ReactNode }) {
 
 function RootComponent() {
   const [qc] = useState(() => new QueryClient({ defaultOptions: { queries: { staleTime: 10_000 } } }));
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const isPreview =
+      window.location.hostname.includes("id-preview--") ||
+      window.location.hostname.includes("lovableproject.com");
+    const inIframe = (() => { try { return window.self !== window.top; } catch { return true; } })();
+    if (!("serviceWorker" in navigator) || isPreview || inIframe) return;
+    navigator.serviceWorker.register("/sw.js").catch(() => {});
+  }, []);
+
   return (
     <QueryClientProvider client={qc}>
       <AuthProvider>
-        <Outlet />
-        <Toaster richColors position="top-center" />
+        <PwaProvider>
+          <Outlet />
+          <Toaster richColors position="top-center" />
+        </PwaProvider>
       </AuthProvider>
     </QueryClientProvider>
   );
