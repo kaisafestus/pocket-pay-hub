@@ -5,14 +5,30 @@ import { useAuth } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Loader2, ArrowLeft, Smartphone } from "lucide-react";
+import { Loader2, ArrowLeft, Smartphone, User } from "lucide-react";
 import { normalizePhone254, formatPhone } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import { useInstall } from "@/lib/pwa";
 
 export const Route = createFileRoute("/auth")({ component: AuthScreen });
 
-type Stage = "phone" | "pin" | "register";
+type Stage = "welcome" | "phone" | "pin" | "register";
+
+type SavedProfile = { phone: string; name: string };
+const PROFILE_KEY = "mpesa.profile";
+const loadProfile = (): SavedProfile | null => {
+  if (typeof window === "undefined") return null;
+  try {
+    const raw = localStorage.getItem(PROFILE_KEY);
+    return raw ? (JSON.parse(raw) as SavedProfile) : null;
+  } catch { return null; }
+};
+const saveProfile = (p: SavedProfile) => {
+  try { localStorage.setItem(PROFILE_KEY, JSON.stringify(p)); } catch { /* ignore */ }
+};
+const clearProfile = () => {
+  try { localStorage.removeItem(PROFILE_KEY); } catch { /* ignore */ }
+};
 
 const phoneToEmail = (p: string) => `${normalizePhone254(p)}@mpesa.local`;
 // Supabase requires min 6 chars for passwords; we expand the 4-digit PIN deterministically.
@@ -25,10 +41,21 @@ const pinToPassword = (pin: string, phone: string) => {
 function AuthScreen() {
   const nav = useNavigate();
   const { user, loading } = useAuth();
+  const [savedProfile, setSavedProfile] = useState<SavedProfile | null>(null);
   const [stage, setStage] = useState<Stage>("phone");
   const [phone, setPhone] = useState("");
   const [fullName, setFullName] = useState("");
   const [busy, setBusy] = useState(false);
+
+  // Initialise from localStorage on mount.
+  useEffect(() => {
+    const p = loadProfile();
+    if (p) {
+      setSavedProfile(p);
+      setPhone(p.phone);
+      setStage("welcome");
+    }
+  }, []);
 
   useEffect(() => { if (!loading && user) nav({ to: "/app" }); }, [loading, user, nav]);
 
@@ -62,7 +89,25 @@ function AuthScreen() {
   return (
     <div className="min-h-screen flex flex-col" style={{ background: "var(--gradient-hero)" }}>
       <div className="flex-1 flex flex-col">
-        <Header onBack={stage !== "phone" ? () => { setStage("phone"); setError(null); } : undefined} />
+        <Header onBack={
+          stage === "welcome" || stage === "phone"
+            ? undefined
+            : () => { setStage(savedProfile ? "welcome" : "phone"); setError(null); }
+        } />
+
+        {stage === "welcome" && savedProfile && (
+          <WelcomeBackStage
+            profile={savedProfile}
+            onSwitchAccount={() => {
+              clearProfile();
+              setSavedProfile(null);
+              setPhone("");
+              setStage("phone");
+            }}
+            onSuccess={() => nav({ to: "/app" })}
+            onSwitchToRegister={() => setStage("register")}
+          />
+        )}
 
         {stage === "phone" && (
           <PhoneStage
@@ -79,7 +124,10 @@ function AuthScreen() {
           <PinStage
             phone={phone}
             onSwitchToRegister={() => setStage("register")}
-            onSuccess={() => nav({ to: "/app" })}
+            onSuccess={(name) => {
+              saveProfile({ phone: normalizePhone254(phone), name: name ?? "" });
+              nav({ to: "/app" });
+            }}
           />
         )}
 
@@ -87,7 +135,10 @@ function AuthScreen() {
           <RegisterStage
             initialPhone={phone}
             onBack={() => setStage("phone")}
-            onDone={() => nav({ to: "/app" })}
+            onDone={(reg) => {
+              saveProfile({ phone: normalizePhone254(reg.phone), name: reg.name });
+              nav({ to: "/app" });
+            }}
           />
         )}
       </div>
@@ -146,7 +197,11 @@ function PhoneStage({
   );
 }
 
-function PinStage({ phone, onSwitchToRegister, onSuccess }: { phone: string; onSwitchToRegister: () => void; onSuccess: () => void }) {
+function PinStage({ phone, onSwitchToRegister, onSuccess }: {
+  phone: string;
+  onSwitchToRegister: () => void;
+  onSuccess: (name: string | null) => void;
+}) {
   const [pin, setPin] = useState<string[]>(["", "", "", ""]);
   const [state, setState] = useState<"idle" | "checking" | "success" | "error">("idle");
   const [attempts, setAttempts] = useState(0);
@@ -171,7 +226,7 @@ function PinStage({ phone, onSwitchToRegister, onSuccess }: { phone: string; onS
     if (code.length !== 4 || state === "checking") return;
     setState("checking");
     void (async () => {
-      const { error } = await supabase.auth.signInWithPassword({
+      const { data: signInData, error } = await supabase.auth.signInWithPassword({
         email: `${normalizePhone254(phone)}@mpesa.local`,
         password: pinToPassword(code, phone),
       });
@@ -185,7 +240,14 @@ function PinStage({ phone, onSwitchToRegister, onSuccess }: { phone: string; onS
         }, 700);
       } else {
         setState("success");
-        setTimeout(onSuccess, 400);
+        // Fetch profile name to cache for next login.
+        let name: string | null = null;
+        const uid = signInData.user?.id;
+        if (uid) {
+          const { data: prof } = await supabase.from("profiles").select("full_name").eq("id", uid).maybeSingle();
+          name = prof?.full_name ?? null;
+        }
+        setTimeout(() => onSuccess(name), 400);
       }
     })();
   }, [pin, state, phone, onSuccess]);
@@ -246,7 +308,11 @@ function PinStage({ phone, onSwitchToRegister, onSuccess }: { phone: string; onS
   );
 }
 
-function RegisterStage({ initialPhone, onBack, onDone }: { initialPhone: string; onBack: () => void; onDone: () => void }) {
+function RegisterStage({ initialPhone, onBack, onDone }: {
+  initialPhone: string;
+  onBack: () => void;
+  onDone: (reg: { phone: string; name: string }) => void;
+}) {
   const [name, setName] = useState("");
   const [phone, setPhone] = useState(initialPhone);
   const [pin, setPin] = useState<string[]>(["", "", "", ""]);
@@ -269,7 +335,7 @@ function RegisterStage({ initialPhone, onBack, onDone }: { initialPhone: string;
       setStep("info");
       return;
     }
-    onDone();
+    onDone({ phone: p, name });
   };
 
   return (
@@ -367,6 +433,123 @@ function PinEntry({
 }
 
 function InstallFooter() {
+  return _InstallFooterImpl();
+}
+
+function WelcomeBackStage({
+  profile, onSwitchAccount, onSuccess, onSwitchToRegister,
+}: {
+  profile: SavedProfile;
+  onSwitchAccount: () => void;
+  onSuccess: () => void;
+  onSwitchToRegister: () => void;
+}) {
+  const [pin, setPin] = useState<string[]>(["", "", "", ""]);
+  const [state, setState] = useState<"idle" | "checking" | "success" | "error">("idle");
+  const [attempts, setAttempts] = useState(0);
+  const refs = useRef<(HTMLInputElement | null)[]>([]);
+
+  const setDigit = (i: number, v: string) => {
+    const c = v.replace(/\D/g, "").slice(-1);
+    setPin((prev) => { const next = [...prev]; next[i] = c; return next; });
+    if (c && i < 3) refs.current[i + 1]?.focus();
+  };
+  const onKey = (i: number, e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Backspace" && !pin[i] && i > 0) refs.current[i - 1]?.focus();
+  };
+
+  useEffect(() => { refs.current[0]?.focus(); }, []);
+
+  useEffect(() => {
+    const code = pin.join("");
+    if (code.length !== 4 || state === "checking") return;
+    setState("checking");
+    void (async () => {
+      const { error } = await supabase.auth.signInWithPassword({
+        email: phoneToEmail(profile.phone),
+        password: pinToPassword(code, profile.phone),
+      });
+      if (error) {
+        setState("error");
+        setAttempts((n) => n + 1);
+        setTimeout(() => {
+          setPin(["", "", "", ""]);
+          setState("idle");
+          refs.current[0]?.focus();
+        }, 700);
+      } else {
+        setState("success");
+        setTimeout(onSuccess, 400);
+      }
+    })();
+  }, [pin, state, profile.phone, onSuccess]);
+
+  const initials = profile.name
+    .split(/\s+/).filter(Boolean).slice(0, 2).map((s) => s[0]?.toUpperCase()).join("") || "M";
+  const firstName = profile.name.split(/\s+/)[0] || "there";
+
+  return (
+    <div className="flex-1 flex flex-col px-6 pt-10">
+      <div className="text-primary-foreground text-center">
+        <div className="h-24 w-24 mx-auto rounded-full bg-primary-foreground text-primary grid place-items-center text-3xl font-bold shadow-2xl ring-4 ring-primary-foreground/20">
+          {initials || <User className="h-10 w-10" />}
+        </div>
+        <h1 className="text-2xl font-bold mt-5">Hi, {firstName}</h1>
+        <p className="text-sm opacity-90 mt-1">{profile.name}</p>
+        <p className="text-xs opacity-70 mt-0.5">{formatPhone(profile.phone)}</p>
+        <p className="text-sm opacity-80 mt-5">Enter your M-PESA PIN to continue</p>
+      </div>
+
+      <div className="mt-8 flex justify-center gap-3">
+        {pin.map((d, i) => {
+          const filled = !!d;
+          const color =
+            state === "success" ? "border-success bg-success text-success-foreground" :
+            state === "error" ? "border-destructive bg-destructive text-destructive-foreground animate-[shake_0.4s]" :
+            filled ? "border-primary-foreground bg-primary-foreground text-primary" :
+            "border-primary-foreground/40 bg-primary-foreground/10 text-primary-foreground";
+          return (
+            <input
+              key={i}
+              ref={(el) => { refs.current[i] = el; }}
+              type="password" inputMode="numeric" maxLength={1}
+              value={d}
+              onChange={(e) => setDigit(i, e.target.value)}
+              onKeyDown={(e) => onKey(i, e)}
+              disabled={state === "checking" || state === "success"}
+              className={cn(
+                "h-16 w-14 text-center text-2xl font-bold rounded-2xl border-2 transition-all outline-none caret-transparent",
+                color,
+              )}
+            />
+          );
+        })}
+      </div>
+
+      <p className={cn("text-center text-sm mt-6 transition-colors",
+        state === "error" ? "text-destructive-foreground bg-destructive/40 mx-auto px-3 py-1 rounded-full" :
+        "text-primary-foreground/80")}>
+        {state === "checking" && "Verifying…"}
+        {state === "success" && "✓ Welcome back"}
+        {state === "error" && "Wrong PIN. Try again."}
+        {state === "idle" && "Enter your 4-digit M-PESA PIN"}
+      </p>
+
+      <div className="mt-auto pt-8 pb-2 flex flex-col items-center gap-3">
+        <button onClick={onSwitchAccount} className="text-sm text-primary-foreground/90 underline">
+          Not you? Use a different account
+        </button>
+        {attempts >= 2 && state !== "success" && (
+          <button onClick={onSwitchToRegister} className="text-xs text-primary-foreground/70 underline">
+            Forgot PIN? Create a new account
+          </button>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function _InstallFooterImpl() {
   const { canInstall, isInstalled, promptInstall } = useInstall();
   if (isInstalled || !canInstall) return null;
   return (
