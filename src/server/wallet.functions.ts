@@ -154,18 +154,14 @@ export const sendMoney = createServerFn({ method: "POST" })
     if (!phoneRe.test(phone)) throw new Error("Invalid Kenyan phone number");
     const sb = admin();
     const { data: prof } = await sb.from("profiles").select("id, full_name").eq("phone", phone).maybeSingle();
-    if (!prof) {
-      // Unregistered: hold not implemented; for now reject
-      throw new Error("Recipient is not registered on M-PESA Lite. Ask them to sign up first.");
-    }
-    if (prof.id === context.userId) throw new Error("You can't send money to yourself");
+    if (prof && prof.id === context.userId) throw new Error("You can't send money to yourself");
     const fee = data.amount > 100 ? Math.min(Math.ceil(data.amount * 0.01), 110) : 0;
     const { data: txnId, error } = await sb.rpc("transfer_funds", {
       _sender: context.userId,
-      _recipient: prof.id,
+      _recipient: prof?.id ?? null,
       _amount: data.amount,
       _type: "send_money",
-      _description: data.description ?? `Send to ${prof.full_name}`,
+      _description: data.description ?? `Send to ${prof?.full_name ?? phone}`,
       _recipient_phone: phone,
       _shortcode: undefined,
       _account_ref: undefined,
