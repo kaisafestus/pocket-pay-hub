@@ -158,7 +158,7 @@ export const sendMoney = createServerFn({ method: "POST" })
     const fee = data.amount > 100 ? Math.min(Math.ceil(data.amount * 0.01), 110) : 0;
     const { data: txnId, error } = await sb.rpc("transfer_funds", {
       _sender: context.userId,
-      _recipient: prof?.id ?? null,
+      _recipient: prof?.id ?? undefined,
       _amount: data.amount,
       _type: "send_money",
       _description: data.description ?? `Send to ${prof?.full_name ?? phone}`,
