@@ -154,20 +154,58 @@ export const sendMoney = createServerFn({ method: "POST" })
     if (!phoneRe.test(phone)) throw new Error("Invalid Kenyan phone number");
     const sb = admin();
     const { data: prof } = await sb.from("profiles").select("id, full_name").eq("phone", phone).maybeSingle();
-    if (!prof) throw new Error("Recipient is not registered on M-PESA Lite. Ask them to sign up first.");
-    if (prof.id === context.userId) throw new Error("You can't send money to yourself");
+    if (prof && prof.id === context.userId) throw new Error("You can't send money to yourself");
+
+    // Resolve a display name for the recipient (for the confirmation message).
+    // Priority: registered profile name -> Eyecon caller-ID -> phone number.
+    let recipientName: string | null = prof?.full_name ?? null;
+    if (!recipientName) {
+      const rapidKey = process.env.RAPIDAPI_KEY;
+      if (rapidKey) {
+        try {
+          const res = await fetch(
+            `https://eyecon.p.rapidapi.com/api/v1/search?code=254&number=${encodeURIComponent(phone.slice(3))}`,
+            {
+              headers: {
+                "x-rapidapi-key": rapidKey,
+                "x-rapidapi-host": "eyecon.p.rapidapi.com",
+              },
+            },
+          );
+          if (res.ok) {
+            const j = (await res.json()) as {
+              name?: string;
+              fullName?: string;
+              data?: { name?: string; fullName?: string } | Array<{ name?: string; fullName?: string }>;
+            };
+            const first = Array.isArray(j.data) ? j.data[0] : j.data;
+            recipientName = j.name || j.fullName || first?.name || first?.fullName || null;
+          }
+        } catch { /* non-fatal */ }
+      }
+    }
+    if (!recipientName) recipientName = "+" + phone;
+
     const fee = data.amount > 100 ? Math.min(Math.ceil(data.amount * 0.01), 110) : 0;
-    const { data: txnId, error } = await sb.rpc("transfer_funds", {
+    const rpcArgs: {
+      _sender: string;
+      _amount: number;
+      _type: "send_money";
+      _recipient?: string;
+      _description?: string;
+      _recipient_phone?: string;
+      _fee?: number;
+    } = {
       _sender: context.userId,
-      _recipient: prof.id,
       _amount: data.amount,
       _type: "send_money",
-      _description: data.description ?? `Send to ${prof.full_name}`,
+      _description: data.description ?? `Send to ${recipientName}`,
       _recipient_phone: phone,
-      _shortcode: undefined,
-      _account_ref: undefined,
       _fee: fee,
-    });
+    };
+    if (prof?.id) rpcArgs._recipient = prof.id;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { data: txnId, error } = await sb.rpc("transfer_funds", rpcArgs as any);
     if (error) throw new Error(error.message);
     return { ok: true, txnId };
   });

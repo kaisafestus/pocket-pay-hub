@@ -36,7 +36,7 @@ function SendPage() {
 
   const amt = parseFloat(amount) || 0;
   const phoneReady = phone.replace(/\D/g, "").length >= 9;
-  const canSend = verified && verified.registered && amt > 0;
+  const canSend = !!verified && amt > 0;
 
   const onVerify = async () => {
     setVerifying(true);
@@ -55,7 +55,6 @@ function SendPage() {
         country: r.country,
         international: r.international,
       });
-      if (!r.registered) toast.error("Number is valid but not registered on M-PESA Lite");
     } catch (e) {
       toast.error(errMsg(e));
       setVerified(null);
@@ -97,8 +96,8 @@ function SendPage() {
               </Button>
             </div>
             {verified && (
-              <div className={`mt-2 rounded-xl border p-3 text-sm flex items-start gap-2 ${verified.registered ? "bg-primary/5 border-primary/30" : "bg-destructive/5 border-destructive/30"}`}>
-                {verified.registered ? <CheckCircle2 className="h-5 w-5 text-primary shrink-0" /> : <ShieldCheck className="h-5 w-5 text-destructive shrink-0" />}
+              <div className="mt-2 rounded-xl border p-3 text-sm flex items-start gap-2 bg-primary/5 border-primary/30">
+                {verified.registered ? <CheckCircle2 className="h-5 w-5 text-primary shrink-0" /> : <ShieldCheck className="h-5 w-5 text-primary shrink-0" />}
                 <div className="space-y-0.5">
                   <p className="font-semibold">{verified.name}</p>
                   <p className="text-xs text-muted-foreground">
@@ -106,9 +105,6 @@ function SendPage() {
                     {verified.carrier ? ` • ${verified.carrier}` : ""}
                     {verified.country ? ` • ${verified.country}` : ""}
                   </p>
-                  {!verified.registered && (
-                    <p className="text-xs text-destructive">Not registered on M-PESA Lite — ask them to sign up to receive funds.</p>
-                  )}
                 </div>
               </div>
             )}
