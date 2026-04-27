@@ -187,17 +187,25 @@ export const sendMoney = createServerFn({ method: "POST" })
     if (!recipientName) recipientName = "+" + phone;
 
     const fee = data.amount > 100 ? Math.min(Math.ceil(data.amount * 0.01), 110) : 0;
-    const { data: txnId, error } = await sb.rpc("transfer_funds", {
+    const rpcArgs: {
+      _sender: string;
+      _amount: number;
+      _type: "send_money";
+      _recipient?: string;
+      _description?: string;
+      _recipient_phone?: string;
+      _fee?: number;
+    } = {
       _sender: context.userId,
-      _recipient: prof?.id ?? undefined,
       _amount: data.amount,
       _type: "send_money",
       _description: data.description ?? `Send to ${recipientName}`,
       _recipient_phone: phone,
-      _shortcode: undefined,
-      _account_ref: undefined,
       _fee: fee,
-    });
+    };
+    if (prof?.id) rpcArgs._recipient = prof.id;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { data: txnId, error } = await sb.rpc("transfer_funds", rpcArgs as any);
     if (error) throw new Error(error.message);
     return { ok: true, txnId };
   });
