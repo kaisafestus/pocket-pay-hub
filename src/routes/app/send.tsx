@@ -100,12 +100,15 @@ function SendPage() {
               <div className={`mt-2 rounded-xl border p-3 text-sm flex items-start gap-2 ${verified.registered ? "bg-primary/5 border-primary/30" : "bg-destructive/5 border-destructive/30"}`}>
                 {verified.registered ? <CheckCircle2 className="h-5 w-5 text-primary shrink-0" /> : <ShieldCheck className="h-5 w-5 text-destructive shrink-0" />}
                 <div className="space-y-0.5">
-                  <p className="font-semibold">{verified.registered ? verified.name : "Not on M-PESA Lite"}</p>
+                  <p className="font-semibold">{verified.name}</p>
                   <p className="text-xs text-muted-foreground">
                     {verified.international || verified.phone}
                     {verified.carrier ? ` • ${verified.carrier}` : ""}
                     {verified.country ? ` • ${verified.country}` : ""}
                   </p>
+                  {!verified.registered && (
+                    <p className="text-xs text-destructive">Not registered on M-PESA Lite — ask them to sign up to receive funds.</p>
+                  )}
                 </div>
               </div>
             )}
