@@ -101,7 +101,7 @@ export const lookupPhone = createServerFn({ method: "POST" })
       country,
       lineType: null as string | null,
       international,
-      registered: !!prof || !!callerName, // allow sending if we have a name from any source
+      registered: !!prof, // only registered users can actually receive funds
       name: displayName,
       isSelf,
     };
