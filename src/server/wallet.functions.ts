@@ -21,6 +21,63 @@ function normPhone(p: string) {
   return d;
 }
 
+/* ================= PHONE LOOKUP (Numverify + local profile) ================= */
+
+export const lookupPhone = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator(z.object({ phone: z.string().min(7).max(20) }).parse)
+  .handler(async ({ data, context }) => {
+    const phone = normPhone(data.phone);
+    const key = process.env.NUMVERIFY_API_KEY;
+    if (!key) throw new Error("Phone lookup service is not configured");
+
+    // Call Numverify — supports http on free plan; use https otherwise.
+    const url = `http://apilayer.net/api/validate?access_key=${encodeURIComponent(key)}&number=${encodeURIComponent(phone)}&country_code=KE&format=1`;
+    let nv: {
+      valid?: boolean;
+      number?: string;
+      local_format?: string;
+      international_format?: string;
+      country_code?: string;
+      country_name?: string;
+      location?: string;
+      carrier?: string;
+      line_type?: string;
+      success?: boolean;
+      error?: { info?: string; type?: string };
+    } = {};
+    try {
+      const res = await fetch(url);
+      nv = await res.json();
+    } catch {
+      throw new Error("Could not reach phone lookup service");
+    }
+    if (nv.success === false) throw new Error(nv.error?.info || "Phone lookup failed");
+    if (!nv.valid) throw new Error("Invalid phone number");
+
+    // Local profile lookup — show real name if registered
+    const sb = admin();
+    const { data: prof } = await sb
+      .from("profiles")
+      .select("id, full_name")
+      .eq("phone", phone)
+      .maybeSingle();
+
+    const isSelf = prof?.id === context.userId;
+
+    return {
+      phone,
+      valid: true,
+      carrier: nv.carrier || null,
+      country: nv.country_name || null,
+      lineType: nv.line_type || null,
+      international: nv.international_format || null,
+      registered: !!prof,
+      name: prof?.full_name ?? null,
+      isSelf,
+    };
+  });
+
 /* ================= SET / VERIFY PIN ================= */
 
 export const setPin = createServerFn({ method: "POST" })

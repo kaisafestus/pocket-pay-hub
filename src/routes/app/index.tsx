@@ -7,6 +7,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { formatKES, timeAgo } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import { useInstall } from "@/lib/pwa";
+import { useState } from "react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 
 export const Route = createFileRoute("/app/")({ component: Dashboard });
 
@@ -21,7 +23,9 @@ const actions = [
 
 function Dashboard() {
   const { user } = useAuth();
-  const { canInstall, promptInstall } = useInstall();
+  const { canInstall, isInstalled, promptInstall } = useInstall();
+  const [iosOpen, setIosOpen] = useState(false);
+  const isIOS = typeof navigator !== "undefined" && /iPad|iPhone|iPod/.test(navigator.userAgent);
 
   const { data: txns } = useQuery({
     queryKey: ["recent-txns", user?.id],
@@ -45,9 +49,12 @@ function Dashboard() {
       <div className="mx-auto max-w-md px-5 -mt-16 space-y-5">
         <BalanceCard />
 
-        {canInstall && (
+        {!isInstalled && (canInstall || isIOS) && (
           <button
-            onClick={() => void promptInstall()}
+            onClick={() => {
+              if (canInstall) void promptInstall();
+              else setIosOpen(true);
+            }}
             className="w-full flex items-center gap-3 rounded-2xl border border-primary/20 bg-accent/40 p-3 text-left hover:bg-accent/60 transition"
           >
             <div className="h-10 w-10 rounded-xl bg-primary text-primary-foreground grid place-items-center">
@@ -59,6 +66,20 @@ function Dashboard() {
             </div>
           </button>
         )}
+
+        <Dialog open={iosOpen} onOpenChange={setIosOpen}>
+          <DialogContent className="max-w-sm">
+            <DialogHeader>
+              <DialogTitle>Install on iPhone</DialogTitle>
+              <DialogDescription>Add M-PESA to your home screen in 3 steps:</DialogDescription>
+            </DialogHeader>
+            <ol className="list-decimal pl-5 text-sm space-y-2 text-foreground">
+              <li>Tap the <b>Share</b> button in Safari (square with arrow).</li>
+              <li>Scroll and tap <b>Add to Home Screen</b>.</li>
+              <li>Tap <b>Add</b>. M-PESA will open like a native app.</li>
+            </ol>
+          </DialogContent>
+        </Dialog>
 
         <div className="grid grid-cols-3 gap-3">
           {actions.map((a) => (
