@@ -28,52 +28,81 @@ export const lookupPhone = createServerFn({ method: "POST" })
   .inputValidator(z.object({ phone: z.string().min(7).max(20) }).parse)
   .handler(async ({ data, context }) => {
     const phone = normPhone(data.phone);
-    const key = process.env.NUMVERIFY_API_KEY;
-    if (!key) throw new Error("Phone lookup service is not configured");
+    if (!phoneRe.test(phone)) throw new Error("Invalid Kenyan phone number");
 
-    // Call Numverify — supports http on free plan; use https otherwise.
-    const url = `http://apilayer.net/api/validate?access_key=${encodeURIComponent(key)}&number=${encodeURIComponent(phone)}&country_code=KE&format=1`;
-    let nv: {
-      valid?: boolean;
-      number?: string;
-      local_format?: string;
-      international_format?: string;
-      country_code?: string;
-      country_name?: string;
-      location?: string;
-      carrier?: string;
-      line_type?: string;
-      success?: boolean;
-      error?: { info?: string; type?: string };
-    } = {};
-    try {
-      const res = await fetch(url);
-      nv = await res.json();
-    } catch {
-      throw new Error("Could not reach phone lookup service");
-    }
-    if (nv.success === false) throw new Error(nv.error?.info || "Phone lookup failed");
-    if (!nv.valid) throw new Error("Invalid phone number");
-
-    // Local profile lookup — show real name if registered
+    // 1) Local registered user takes priority — show their registered name.
     const sb = admin();
     const { data: prof } = await sb
       .from("profiles")
       .select("id, full_name")
       .eq("phone", phone)
       .maybeSingle();
-
     const isSelf = prof?.id === context.userId;
+
+    // 2) Numverify — validates number + returns carrier/country (no name).
+    let carrier: string | null = null;
+    let country: string | null = null;
+    let international: string | null = null;
+    const nvKey = process.env.NUMVERIFY_API_KEY;
+    if (nvKey) {
+      try {
+        const res = await fetch(
+          `http://apilayer.net/api/validate?access_key=${encodeURIComponent(nvKey)}&number=${encodeURIComponent(phone)}&country_code=KE&format=1`,
+        );
+        const nv = (await res.json()) as {
+          valid?: boolean;
+          international_format?: string;
+          country_name?: string;
+          carrier?: string;
+        };
+        if (nv.valid) {
+          carrier = nv.carrier || null;
+          country = nv.country_name || null;
+          international = nv.international_format || null;
+        }
+      } catch { /* non-fatal */ }
+    }
+    if (!international) international = "+" + phone;
+
+    // 3) Eyecon caller-ID (RapidAPI) — real name lookup for ANY number.
+    let callerName: string | null = null;
+    const rapidKey = process.env.RAPIDAPI_KEY;
+    if (rapidKey && !prof) {
+      try {
+        const res = await fetch(
+          `https://eyecon.p.rapidapi.com/api/v1/search?code=254&number=${encodeURIComponent(phone.slice(3))}`,
+          {
+            headers: {
+              "x-rapidapi-key": rapidKey,
+              "x-rapidapi-host": "eyecon.p.rapidapi.com",
+            },
+          },
+        );
+        if (res.ok) {
+          const j = (await res.json()) as {
+            name?: string;
+            fullName?: string;
+            data?: { name?: string; fullName?: string } | Array<{ name?: string; fullName?: string }>;
+          };
+          const first = Array.isArray(j.data) ? j.data[0] : j.data;
+          callerName =
+            j.name || j.fullName || first?.name || first?.fullName || null;
+        }
+      } catch { /* non-fatal */ }
+    }
+
+    const name = prof?.full_name ?? callerName ?? null;
+    const displayName = name ?? "M-PESA User";
 
     return {
       phone,
       valid: true,
-      carrier: nv.carrier || null,
-      country: nv.country_name || null,
-      lineType: nv.line_type || null,
-      international: nv.international_format || null,
-      registered: !!prof,
-      name: prof?.full_name ?? null,
+      carrier,
+      country,
+      lineType: null as string | null,
+      international,
+      registered: !!prof, // only registered users can actually receive funds
+      name: displayName,
       isSelf,
     };
   });
@@ -125,10 +154,7 @@ export const sendMoney = createServerFn({ method: "POST" })
     if (!phoneRe.test(phone)) throw new Error("Invalid Kenyan phone number");
     const sb = admin();
     const { data: prof } = await sb.from("profiles").select("id, full_name").eq("phone", phone).maybeSingle();
-    if (!prof) {
-      // Unregistered: hold not implemented; for now reject
-      throw new Error("Recipient is not registered on M-PESA Lite. Ask them to sign up first.");
-    }
+    if (!prof) throw new Error("Recipient is not registered on M-PESA Lite. Ask them to sign up first.");
     if (prof.id === context.userId) throw new Error("You can't send money to yourself");
     const fee = data.amount > 100 ? Math.min(Math.ceil(data.amount * 0.01), 110) : 0;
     const { data: txnId, error } = await sb.rpc("transfer_funds", {
