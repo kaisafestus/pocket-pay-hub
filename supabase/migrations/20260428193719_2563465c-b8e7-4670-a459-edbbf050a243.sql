@@ -1,0 +1,1 @@
+DROP FUNCTION IF EXISTS public.transfer_funds(uuid, uuid, numeric, txn_type, text, text, text, text, numeric);
