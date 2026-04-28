@@ -258,35 +258,20 @@ export type Database = {
         }
         Returns: boolean
       }
-      transfer_funds:
-        | {
-            Args: {
-              _account_ref?: string
-              _amount: number
-              _description?: string
-              _fee?: number
-              _recipient?: string
-              _recipient_phone?: string
-              _sender: string
-              _shortcode?: string
-              _type: Database["public"]["Enums"]["txn_type"]
-            }
-            Returns: string
-          }
-        | {
-            Args: {
-              _account_ref?: string
-              _amount: number
-              _description?: string
-              _fee?: number
-              _recipient: string
-              _recipient_phone?: string
-              _sender: string
-              _shortcode?: string
-              _type: Database["public"]["Enums"]["txn_type"]
-            }
-            Returns: string
-          }
+      transfer_funds: {
+        Args: {
+          _account_ref?: string
+          _amount: number
+          _description?: string
+          _fee?: number
+          _recipient?: string
+          _recipient_phone?: string
+          _sender: string
+          _shortcode?: string
+          _type: Database["public"]["Enums"]["txn_type"]
+        }
+        Returns: string
+      }
     }
     Enums: {
       app_role: "customer" | "agent" | "merchant" | "admin"
