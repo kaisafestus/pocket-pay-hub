@@ -7,6 +7,19 @@ import { Toaster } from "@/components/ui/sonner";
 
 import appCss from "../styles.css?url";
 
+// Install at module load (before React mounts) so stray Response rejections
+// from server-fn auth middleware never reach the error overlay / blank screen.
+if (typeof window !== "undefined") {
+  window.addEventListener("unhandledrejection", (e) => {
+    if (e.reason instanceof Response) e.preventDefault();
+  });
+  window.addEventListener("error", (e) => {
+    if (e.error instanceof Response || (e.message && e.message.includes("[object Response]"))) {
+      e.preventDefault();
+    }
+  });
+}
+
 function NotFoundComponent() {
   return (
     <div className="flex min-h-screen items-center justify-center bg-background px-4">
@@ -81,16 +94,6 @@ function RootComponent() {
     navigator.serviceWorker.register("/sw.js").catch(() => {});
   }, []);
 
-  // Swallow stray Response rejections from server-fn middleware so they
-  // don't crash the app with a blank screen — local try/catches still handle them.
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-    const onReject = (e: PromiseRejectionEvent) => {
-      if (e.reason instanceof Response) e.preventDefault();
-    };
-    window.addEventListener("unhandledrejection", onReject);
-    return () => window.removeEventListener("unhandledrejection", onReject);
-  }, []);
 
   return (
     <QueryClientProvider client={qc}>
