@@ -6,8 +6,12 @@ export const attachSupabaseAuth = createMiddleware({ type: "function" }).client(
     const { data } = await supabase.auth.getSession();
     const token = data.session?.access_token;
 
+    if (!token) {
+      throw new Error("Please sign in again to continue.");
+    }
+
     return next({
-      headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+      headers: { Authorization: `Bearer ${token}` },
     });
   },
 );
