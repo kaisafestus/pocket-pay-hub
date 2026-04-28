@@ -1,0 +1,1 @@
+DROP TRIGGER IF EXISTS trg_create_txn_messages ON public.transactions;
