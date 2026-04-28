@@ -81,6 +81,17 @@ function RootComponent() {
     navigator.serviceWorker.register("/sw.js").catch(() => {});
   }, []);
 
+  // Swallow stray Response rejections from server-fn middleware so they
+  // don't crash the app with a blank screen — local try/catches still handle them.
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const onReject = (e: PromiseRejectionEvent) => {
+      if (e.reason instanceof Response) e.preventDefault();
+    };
+    window.addEventListener("unhandledrejection", onReject);
+    return () => window.removeEventListener("unhandledrejection", onReject);
+  }, []);
+
   return (
     <QueryClientProvider client={qc}>
       <AuthProvider>
