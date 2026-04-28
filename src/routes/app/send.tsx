@@ -67,10 +67,10 @@ function SendPage() {
     try {
       const r = await send({ data: { phone, amount: amt, description: desc, pin } });
       toast.success(`Sent ${formatKES(amt)} successfully`);
-      qc.invalidateQueries();
       setOpen(false);
-      nav({ to: "/app" });
       void r;
+      await qc.invalidateQueries();
+      nav({ to: "/app" });
     } catch (e) {
       toast.error(errMsg(e));
     }
