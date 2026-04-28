@@ -43,7 +43,7 @@ function TillForm() {
     try {
       const r = await fn({ data: { till, amount: amt, pin } });
       toast.success(`Paid ${formatKES(amt)} to ${r.business}`);
-      qc.invalidateQueries(); setOpen(false); nav({ to: "/app" });
+      await qc.invalidateQueries(); setOpen(false); nav({ to: "/app" });
     } catch (e) { toast.error(errMsg(e)); }
   };
 
@@ -67,7 +67,7 @@ function PaybillForm() {
     try {
       const r = await fn({ data: { paybill, account, amount: amt, pin } });
       toast.success(`Paid ${formatKES(amt)} to ${r.business}`);
-      qc.invalidateQueries(); setOpen(false); nav({ to: "/app" });
+      await qc.invalidateQueries(); setOpen(false); nav({ to: "/app" });
     } catch (e) { toast.error(errMsg(e)); }
   };
 
