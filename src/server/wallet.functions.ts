@@ -1,5 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { attachSupabaseAuth } from "@/lib/server-fn-auth";
 import { z } from "zod";
 import { createClient } from "@supabase/supabase-js";
 import type { Database } from "@/integrations/supabase/types";
@@ -24,7 +25,7 @@ function normPhone(p: string) {
 /* ================= PHONE LOOKUP (Numverify + local profile) ================= */
 
 export const lookupPhone = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([attachSupabaseAuth, requireSupabaseAuth])
   .inputValidator(z.object({ phone: z.string().min(7).max(20) }).parse)
   .handler(async ({ data, context }) => {
     const phone = normPhone(data.phone);
@@ -110,7 +111,7 @@ export const lookupPhone = createServerFn({ method: "POST" })
 /* ================= SET / VERIFY PIN ================= */
 
 export const setPin = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([attachSupabaseAuth, requireSupabaseAuth])
   .inputValidator(z.object({ pin: z.string().regex(/^\d{4}$/), currentPin: z.string().regex(/^\d{4}$/).optional() }).parse)
   .handler(async ({ data, context }) => {
     const sb = admin();
@@ -141,7 +142,7 @@ async function verifyPin(userId: string, pin: string) {
 /* ================= SEND MONEY ================= */
 
 export const sendMoney = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([attachSupabaseAuth, requireSupabaseAuth])
   .inputValidator(z.object({
     phone: z.string().min(10).max(15),
     amount: z.number().positive().max(150000),
@@ -213,7 +214,7 @@ export const sendMoney = createServerFn({ method: "POST" })
 /* ================= PAY TILL ================= */
 
 export const payTill = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([attachSupabaseAuth, requireSupabaseAuth])
   .inputValidator(z.object({
     till: z.string().min(4).max(10).regex(/^\d+$/),
     amount: z.number().positive().max(300000),
@@ -242,7 +243,7 @@ export const payTill = createServerFn({ method: "POST" })
 /* ================= PAY BILL ================= */
 
 export const payBill = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([attachSupabaseAuth, requireSupabaseAuth])
   .inputValidator(z.object({
     paybill: z.string().min(4).max(10).regex(/^\d+$/),
     account: z.string().min(1).max(60),
@@ -272,7 +273,7 @@ export const payBill = createServerFn({ method: "POST" })
 /* ================= WITHDRAW AT AGENT ================= */
 
 export const withdrawAtAgent = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([attachSupabaseAuth, requireSupabaseAuth])
   .inputValidator(z.object({
     agentNumber: z.string().min(3).max(10).regex(/^\d+$/),
     amount: z.number().positive().max(150000),
@@ -306,7 +307,7 @@ export const withdrawAtAgent = createServerFn({ method: "POST" })
 /* ================= AGENT: DEPOSIT FOR CUSTOMER ================= */
 
 export const agentDeposit = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([attachSupabaseAuth, requireSupabaseAuth])
   .inputValidator(z.object({
     customerPhone: z.string().min(10).max(15),
     amount: z.number().positive().max(150000),
@@ -339,7 +340,7 @@ export const agentDeposit = createServerFn({ method: "POST" })
 /* ================= ROLE ENROLLMENT ================= */
 
 export const becomeAgent = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([attachSupabaseAuth, requireSupabaseAuth])
   .inputValidator(z.object({
     storeName: z.string().min(2).max(80),
     location: z.string().max(120).optional(),
@@ -360,7 +361,7 @@ export const becomeAgent = createServerFn({ method: "POST" })
   });
 
 export const becomeMerchant = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([attachSupabaseAuth, requireSupabaseAuth])
   .inputValidator(z.object({
     businessName: z.string().min(2).max(80),
     type: z.enum(["till", "paybill"]),
@@ -384,7 +385,7 @@ export const becomeMerchant = createServerFn({ method: "POST" })
 /* ================= REVERSAL (only sender can request, only if recipient hasn't moved it) ================= */
 
 export const requestReversal = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([attachSupabaseAuth, requireSupabaseAuth])
   .inputValidator(z.object({ txnId: z.string().uuid() }).parse)
   .handler(async ({ data, context }) => {
     const sb = admin();
