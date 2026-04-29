@@ -109,7 +109,7 @@ function PochiForm() {
 
   const onConfirm = async (pin: string) => {
     try {
-      await sendFn({ data: { phone, amount: amt, pin, name: biz ?? undefined } });
+      await sendFn({ data: { phone, amount: amt, pin, description: biz ? `Pochi: ${biz}` : undefined } });
       toast.success(`Sent ${formatKES(amt)} to ${biz ?? phone}`);
       await qc.invalidateQueries(); setOpen(false); nav({ to: "/app" });
     } catch (e) { toast.error(errMsg(e)); }
