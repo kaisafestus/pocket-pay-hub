@@ -6,7 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { PinDialog } from "@/components/mpesa/PinDialog";
-import { payTill, payBill } from "@/server/wallet.functions";
+import { payTill, payBill, sendMoney, lookupPhone } from "@/server/wallet.functions";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
@@ -21,12 +21,14 @@ function LipaPage() {
       <div className="mx-auto max-w-md px-5 -mt-6">
         <div className="rounded-2xl bg-card border p-5" style={{ boxShadow: "var(--shadow-card)" }}>
           <Tabs defaultValue="till">
-            <TabsList className="grid grid-cols-2 w-full mb-5">
+            <TabsList className="grid grid-cols-3 w-full mb-5">
               <TabsTrigger value="till">Buy Goods (Till)</TabsTrigger>
               <TabsTrigger value="paybill">Pay Bill</TabsTrigger>
+              <TabsTrigger value="pochi">Pochi la Biashara</TabsTrigger>
             </TabsList>
             <TabsContent value="till"><TillForm /></TabsContent>
             <TabsContent value="paybill"><PaybillForm /></TabsContent>
+            <TabsContent value="pochi"><PochiForm /></TabsContent>
           </Tabs>
         </div>
       </div>
