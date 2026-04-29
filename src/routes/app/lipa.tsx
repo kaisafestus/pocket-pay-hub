@@ -6,7 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { PinDialog } from "@/components/mpesa/PinDialog";
-import { payTill, payBill } from "@/server/wallet.functions";
+import { payTill, payBill, sendMoney, lookupPhone } from "@/server/wallet.functions";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
@@ -21,12 +21,14 @@ function LipaPage() {
       <div className="mx-auto max-w-md px-5 -mt-6">
         <div className="rounded-2xl bg-card border p-5" style={{ boxShadow: "var(--shadow-card)" }}>
           <Tabs defaultValue="till">
-            <TabsList className="grid grid-cols-2 w-full mb-5">
+            <TabsList className="grid grid-cols-3 w-full mb-5">
               <TabsTrigger value="till">Buy Goods (Till)</TabsTrigger>
               <TabsTrigger value="paybill">Pay Bill</TabsTrigger>
+              <TabsTrigger value="pochi">Pochi la Biashara</TabsTrigger>
             </TabsList>
             <TabsContent value="till"><TillForm /></TabsContent>
             <TabsContent value="paybill"><PaybillForm /></TabsContent>
+            <TabsContent value="pochi"><PochiForm /></TabsContent>
           </Tabs>
         </div>
       </div>
@@ -79,6 +81,55 @@ function PaybillForm() {
       <PinDialog open={open} onOpenChange={setOpen}
         trigger={<Button className="w-full" size="lg" disabled={!valid}>Pay {amt > 0 && formatKES(amt)}</Button>}
         title="Confirm Payment" summary={<>Pay <b>{formatKES(amt)}</b> to paybill <b>{paybill}</b>, account <b>{account}</b>.</>} onConfirm={onConfirm} />
+    </div>
+  );
+}
+
+function PochiForm() {
+  const [phone, setPhone] = useState("");
+  const [amount, setAmount] = useState("");
+  const [open, setOpen] = useState(false);
+  const [biz, setBiz] = useState<string | null>(null);
+  const [looking, setLooking] = useState(false);
+  const sendFn = useServerFn(sendMoney);
+  const lookupFn = useServerFn(lookupPhone);
+  const qc = useQueryClient();
+  const nav = useNavigate();
+  const amt = parseFloat(amount) || 0;
+  const valid = phone.replace(/\D/g, "").length >= 9 && amt > 0;
+
+  const verify = async () => {
+    setLooking(true); setBiz(null);
+    try {
+      const r = await lookupFn({ data: { phone } });
+      setBiz(r.name || r.international || phone);
+    } catch (e) { toast.error(errMsg(e)); }
+    finally { setLooking(false); }
+  };
+
+  const onConfirm = async (pin: string) => {
+    try {
+      await sendFn({ data: { phone, amount: amt, pin, description: biz ? `Pochi: ${biz}` : undefined } });
+      toast.success(`Sent ${formatKES(amt)} to ${biz ?? phone}`);
+      await qc.invalidateQueries(); setOpen(false); nav({ to: "/app" });
+    } catch (e) { toast.error(errMsg(e)); }
+  };
+
+  return (
+    <div className="space-y-4">
+      <p className="text-xs text-muted-foreground">Send to a business's personal Pochi la Biashara number.</p>
+      <div className="space-y-1.5">
+        <Label>Business phone (Pochi)</Label>
+        <div className="flex gap-2">
+          <Input value={phone} onChange={(e) => { setPhone(e.target.value); setBiz(null); }} placeholder="07XX XXX XXX" inputMode="tel" />
+          <Button type="button" variant="secondary" onClick={verify} disabled={looking || phone.length < 9}>{looking ? "…" : "Verify"}</Button>
+        </div>
+        {biz && <p className="text-xs text-success">✓ {biz}</p>}
+      </div>
+      <div className="space-y-1.5"><Label>Amount (KES)</Label><Input value={amount} onChange={(e) => setAmount(e.target.value)} type="number" placeholder="0" /></div>
+      <PinDialog open={open} onOpenChange={setOpen}
+        trigger={<Button className="w-full" size="lg" disabled={!valid}>Pay {amt > 0 && formatKES(amt)}</Button>}
+        title="Confirm Payment" summary={<>Send <b>{formatKES(amt)}</b> to Pochi <b>{biz ?? phone}</b>.</>} onConfirm={onConfirm} />
     </div>
   );
 }
