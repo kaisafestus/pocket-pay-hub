@@ -1,9 +1,10 @@
 import { createFileRoute, Outlet, Link, useNavigate, useRouterState } from "@tanstack/react-router";
 import { useEffect } from "react";
 import { useAuth } from "@/lib/auth";
-import { Loader2, Home, History, Store, Wallet, LogOut, User, MessageSquare } from "lucide-react";
+import { Loader2, Home, History, Store, Wallet, LogOut, User } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
+import messagesIcon from "@/assets/messages-icon.png";
 
 export const Route = createFileRoute("/app")({
   component: AppLayout,
@@ -26,12 +27,13 @@ function AppLayout() {
     );
   }
 
-  const tabs: { to: string; label: string; icon: typeof Home }[] = [
+  type Tab = { to: string; label: string; icon?: typeof Home; image?: string };
+  const tabs: Tab[] = [
     { to: "/app", label: "Home", icon: Home },
     { to: "/app/statement", label: "Statement", icon: History },
-    { to: "/app/messages", label: "Messages", icon: MessageSquare },
-    ...(roles.includes("merchant") ? [{ to: "/app/merchant", label: "Merchant", icon: Store }] : []),
-    ...(roles.includes("agent") ? [{ to: "/app/agent", label: "Agent", icon: Wallet }] : []),
+    { to: "/app/messages", label: "Messages", image: messagesIcon },
+    ...(roles.includes("merchant") ? [{ to: "/app/merchant", label: "Merchant", icon: Store } as Tab] : []),
+    ...(roles.includes("agent") ? [{ to: "/app/agent", label: "Agent", icon: Wallet } as Tab] : []),
     { to: "/app/account", label: "Account", icon: User },
   ];
 
@@ -54,7 +56,11 @@ function AppLayout() {
                   isActive ? "text-primary" : "text-muted-foreground hover:text-foreground"
                 )}
               >
-                <t.icon className="h-5 w-5" />
+                {t.image ? (
+                  <img src={t.image} alt="" width={20} height={20} loading="lazy" className="h-5 w-5 object-contain" />
+                ) : t.icon ? (
+                  <t.icon className="h-5 w-5" />
+                ) : null}
                 {t.label}
               </Link>
             );
