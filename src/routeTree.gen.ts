@@ -21,6 +21,7 @@ import { Route as AppMerchantRouteImport } from './routes/app/merchant'
 import { Route as AppLipaRouteImport } from './routes/app/lipa'
 import { Route as AppAgentRouteImport } from './routes/app/agent'
 import { Route as AppAccountRouteImport } from './routes/app/account'
+import { Route as AppSuccessTxnIdRouteImport } from './routes/app/success.$txnId'
 
 const AuthRoute = AuthRouteImport.update({
   id: '/auth',
@@ -82,6 +83,11 @@ const AppAccountRoute = AppAccountRouteImport.update({
   path: '/account',
   getParentRoute: () => AppRoute,
 } as any)
+const AppSuccessTxnIdRoute = AppSuccessTxnIdRouteImport.update({
+  id: '/success/$txnId',
+  path: '/success/$txnId',
+  getParentRoute: () => AppRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -96,6 +102,7 @@ export interface FileRoutesByFullPath {
   '/app/statement': typeof AppStatementRoute
   '/app/withdraw': typeof AppWithdrawRoute
   '/app/': typeof AppIndexRoute
+  '/app/success/$txnId': typeof AppSuccessTxnIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -109,6 +116,7 @@ export interface FileRoutesByTo {
   '/app/statement': typeof AppStatementRoute
   '/app/withdraw': typeof AppWithdrawRoute
   '/app': typeof AppIndexRoute
+  '/app/success/$txnId': typeof AppSuccessTxnIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -124,6 +132,7 @@ export interface FileRoutesById {
   '/app/statement': typeof AppStatementRoute
   '/app/withdraw': typeof AppWithdrawRoute
   '/app/': typeof AppIndexRoute
+  '/app/success/$txnId': typeof AppSuccessTxnIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -140,6 +149,7 @@ export interface FileRouteTypes {
     | '/app/statement'
     | '/app/withdraw'
     | '/app/'
+    | '/app/success/$txnId'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -153,6 +163,7 @@ export interface FileRouteTypes {
     | '/app/statement'
     | '/app/withdraw'
     | '/app'
+    | '/app/success/$txnId'
   id:
     | '__root__'
     | '/'
@@ -167,6 +178,7 @@ export interface FileRouteTypes {
     | '/app/statement'
     | '/app/withdraw'
     | '/app/'
+    | '/app/success/$txnId'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -261,6 +273,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppAccountRouteImport
       parentRoute: typeof AppRoute
     }
+    '/app/success/$txnId': {
+      id: '/app/success/$txnId'
+      path: '/success/$txnId'
+      fullPath: '/app/success/$txnId'
+      preLoaderRoute: typeof AppSuccessTxnIdRouteImport
+      parentRoute: typeof AppRoute
+    }
   }
 }
 
@@ -274,6 +293,7 @@ interface AppRouteChildren {
   AppStatementRoute: typeof AppStatementRoute
   AppWithdrawRoute: typeof AppWithdrawRoute
   AppIndexRoute: typeof AppIndexRoute
+  AppSuccessTxnIdRoute: typeof AppSuccessTxnIdRoute
 }
 
 const AppRouteChildren: AppRouteChildren = {
@@ -286,6 +306,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppStatementRoute: AppStatementRoute,
   AppWithdrawRoute: AppWithdrawRoute,
   AppIndexRoute: AppIndexRoute,
+  AppSuccessTxnIdRoute: AppSuccessTxnIdRoute,
 }
 
 const AppRouteWithChildren = AppRoute._addFileChildren(AppRouteChildren)
