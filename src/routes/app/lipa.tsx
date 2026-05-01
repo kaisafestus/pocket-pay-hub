@@ -45,7 +45,9 @@ function TillForm() {
     try {
       const r = await fn({ data: { till, amount: amt, pin } });
       toast.success(`Paid ${formatKES(amt)} to ${r.business}`);
-      await qc.invalidateQueries(); setOpen(false); nav({ to: "/app" });
+      await qc.invalidateQueries(); setOpen(false);
+      if (r.txnId) nav({ to: "/app/success/$txnId", params: { txnId: r.txnId } });
+      else nav({ to: "/app" });
     } catch (e) { toast.error(errMsg(e)); }
   };
 
@@ -69,7 +71,9 @@ function PaybillForm() {
     try {
       const r = await fn({ data: { paybill, account, amount: amt, pin } });
       toast.success(`Paid ${formatKES(amt)} to ${r.business}`);
-      await qc.invalidateQueries(); setOpen(false); nav({ to: "/app" });
+      await qc.invalidateQueries(); setOpen(false);
+      if (r.txnId) nav({ to: "/app/success/$txnId", params: { txnId: r.txnId } });
+      else nav({ to: "/app" });
     } catch (e) { toast.error(errMsg(e)); }
   };
 
@@ -109,9 +113,11 @@ function PochiForm() {
 
   const onConfirm = async (pin: string) => {
     try {
-      await sendFn({ data: { phone, amount: amt, pin, description: biz ? `Pochi: ${biz}` : undefined } });
+      const r = await sendFn({ data: { phone, amount: amt, pin, description: biz ? `Pochi: ${biz}` : undefined } });
       toast.success(`Sent ${formatKES(amt)} to ${biz ?? phone}`);
-      await qc.invalidateQueries(); setOpen(false); nav({ to: "/app" });
+      await qc.invalidateQueries(); setOpen(false);
+      if (r.txnId) nav({ to: "/app/success/$txnId", params: { txnId: r.txnId } });
+      else nav({ to: "/app" });
     } catch (e) { toast.error(errMsg(e)); }
   };
 
