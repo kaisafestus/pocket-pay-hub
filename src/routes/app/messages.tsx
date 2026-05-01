@@ -119,8 +119,6 @@ function MessagesScreen() {
   );
 }
 
-import messagesIconImg from "@/assets/messages-icon.png";
-
 function MessageBubble({ m }: { m: Message }) {
   return (
     <div className="flex flex-col items-start max-w-[88%]">
@@ -138,7 +136,7 @@ function MessageBubble({ m }: { m: Message }) {
         )}
         {m.link_url && (
           <div className="mt-2 flex items-center gap-2 rounded-lg bg-black/25 px-2 py-1.5">
-            <img src={messagesIconImg} alt="" className="h-6 w-6 rounded object-contain bg-[#fbbf24] p-0.5" />
+            <img src={messagesIcon} alt="" className="h-6 w-6 rounded object-contain bg-[#fbbf24] p-0.5" />
             <span className="text-[11px] text-zinc-300 truncate">
               {(m.link_label ?? "").replace(/^https?:\/\//, "")}
             </span>
