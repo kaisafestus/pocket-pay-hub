@@ -251,6 +251,7 @@ export type Database = {
     }
     Functions: {
       fmt_kes: { Args: { _n: number }; Returns: string }
+      gen_mpesa_ref: { Args: never; Returns: string }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -258,6 +259,7 @@ export type Database = {
         }
         Returns: boolean
       }
+      mpesa_topup: { Args: { _amount: number; _user: string }; Returns: string }
       transfer_funds: {
         Args: {
           _account_ref?: string

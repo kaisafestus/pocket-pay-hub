@@ -16,6 +16,7 @@ export const Route = createFileRoute("/app/send")({ component: SendPage });
 
 function SendPage() {
   const [phone, setPhone] = useState("");
+  const [recipientName, setRecipientName] = useState("");
   const [amount, setAmount] = useState("");
   const [desc, setDesc] = useState("");
   const [open, setOpen] = useState(false);
@@ -36,7 +37,8 @@ function SendPage() {
 
   const amt = parseFloat(amount) || 0;
   const phoneReady = phone.replace(/\D/g, "").length >= 9;
-  const canSend = !!verified && amt > 0;
+  // Allow sending if either verified via lookup OR a manual recipient name is provided.
+  const canSend = phoneReady && amt > 0 && (!!verified || recipientName.trim().length >= 2);
 
   const onVerify = async () => {
     setVerifying(true);
@@ -55,6 +57,7 @@ function SendPage() {
         country: r.country,
         international: r.international,
       });
+      if (r.name && r.name !== "M-PESA User") setRecipientName(r.name);
     } catch (e) {
       toast.error(errMsg(e));
       setVerified(null);
@@ -65,12 +68,26 @@ function SendPage() {
 
   const onConfirm = async (pin: string) => {
     try {
-      const r = await send({ data: { phone, amount: amt, description: desc, pin } });
+      // The DB message trigger derives the recipient name from `description`
+      // when no registered profile exists. We use the manually-typed name so
+      // the M-PESA confirmation message reads "Sent to JANE DOE 0712...".
+      const fallbackDesc = `Send to ${recipientName.trim() || verified?.name || phone}`;
+      const r = await send({
+        data: {
+          phone,
+          amount: amt,
+          description: desc?.trim() ? desc : fallbackDesc,
+          pin,
+        },
+      });
       toast.success(`Sent ${formatKES(amt)} successfully`);
       setOpen(false);
-      void r;
       await qc.invalidateQueries();
-      nav({ to: "/app" });
+      if (r.txnId) {
+        nav({ to: "/app/success/$txnId", params: { txnId: r.txnId } });
+      } else {
+        nav({ to: "/app" });
+      }
     } catch (e) {
       toast.error(errMsg(e));
     }
@@ -110,6 +127,16 @@ function SendPage() {
             )}
           </div>
           <div className="space-y-1.5">
+            <Label>Recipient name</Label>
+            <Input
+              placeholder="e.g. JANE WANJIKU"
+              value={recipientName}
+              onChange={(e) => setRecipientName(e.target.value)}
+              maxLength={60}
+            />
+            <p className="text-[11px] text-muted-foreground">Shown on the M-PESA confirmation message.</p>
+          </div>
+          <div className="space-y-1.5">
             <Label>Amount (KES)</Label>
             <Input placeholder="0" value={amount} onChange={(e) => setAmount(e.target.value)} type="number" inputMode="decimal" />
           </div>
@@ -123,7 +150,7 @@ function SendPage() {
             onOpenChange={setOpen}
             trigger={<Button className="w-full" size="lg" disabled={!canSend}>Send {amt > 0 && formatKES(amt)}</Button>}
             title="Confirm Send Money"
-            summary={<>You are sending <b>{formatKES(amt)}</b> to <b>{verified?.name ?? phone}</b> ({verified?.international ?? phone}).</>}
+            summary={<>You are sending <b>{formatKES(amt)}</b> to <b>{recipientName || verified?.name || phone}</b> ({verified?.international ?? phone}).</>}
             onConfirm={onConfirm}
           />
         </div>

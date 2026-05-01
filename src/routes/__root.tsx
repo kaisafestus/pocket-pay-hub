@@ -3,6 +3,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import { AuthProvider } from "@/lib/auth";
 import { PwaProvider } from "@/lib/pwa";
+import { ThemeProvider } from "@/lib/theme";
 import { Toaster } from "@/components/ui/sonner";
 
 import appCss from "../styles.css?url";
@@ -97,12 +98,14 @@ function RootComponent() {
 
   return (
     <QueryClientProvider client={qc}>
-      <AuthProvider>
-        <PwaProvider>
-          <Outlet />
-          <Toaster richColors position="top-center" />
-        </PwaProvider>
-      </AuthProvider>
+      <ThemeProvider>
+        <AuthProvider>
+          <PwaProvider>
+            <Outlet />
+            <Toaster richColors position="top-center" />
+          </PwaProvider>
+        </AuthProvider>
+      </ThemeProvider>
     </QueryClientProvider>
   );
 }

@@ -4,6 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
 import { ArrowLeft, Phone, MoreVertical, Search } from "lucide-react";
+import messagesIcon from "@/assets/messages-icon.png";
 
 export const Route = createFileRoute("/app/messages")({ component: MessagesScreen });
 
@@ -61,8 +62,8 @@ function MessagesScreen() {
             <ArrowLeft className="h-5 w-5" />
           </button>
 
-          <div className="h-9 w-9 rounded-full bg-[#00a82d] grid place-items-center text-white font-bold text-[10px] tracking-tight shadow">
-            M-PESA
+          <div className="h-9 w-9 rounded-full bg-[#fbbf24] grid place-items-center shadow overflow-hidden">
+            <img src={messagesIcon} alt="M-PESA" className="h-7 w-7 object-contain" />
           </div>
 
           <div className="flex-1 min-w-0">
@@ -135,9 +136,7 @@ function MessageBubble({ m }: { m: Message }) {
         )}
         {m.link_url && (
           <div className="mt-2 flex items-center gap-2 rounded-lg bg-black/25 px-2 py-1.5">
-            <div className="h-6 w-6 rounded bg-[#00a82d] grid place-items-center text-[8px] font-bold">
-              M
-            </div>
+            <img src={messagesIcon} alt="" className="h-6 w-6 rounded object-contain bg-[#fbbf24] p-0.5" />
             <span className="text-[11px] text-zinc-300 truncate">
               {(m.link_label ?? "").replace(/^https?:\/\//, "")}
             </span>

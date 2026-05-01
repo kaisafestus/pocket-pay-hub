@@ -413,3 +413,42 @@ export const requestReversal = createServerFn({ method: "POST" })
     await sb.from("transactions").update({ status: "reversed" }).eq("id", data.txnId);
     return { ok: true };
   });
+
+/* ================= TOP UP (test/demo) ================= */
+
+export const topupWallet = createServerFn({ method: "POST" })
+  .middleware([attachSupabaseAuth, requireSupabaseAuth])
+  .inputValidator(z.object({ amount: z.number().positive().max(300000) }).parse)
+  .handler(async ({ data, context }) => {
+    const sb = admin();
+    const { data: txnId, error } = await sb.rpc("mpesa_topup", {
+      _user: context.userId,
+      _amount: data.amount,
+    });
+    if (error) throw new Error(error.message);
+    return { ok: true, txnId };
+  });
+
+/* ================= GET TXN (for success screen) ================= */
+
+export const getTransaction = createServerFn({ method: "POST" })
+  .middleware([attachSupabaseAuth, requireSupabaseAuth])
+  .inputValidator(z.object({ id: z.string().uuid() }).parse)
+  .handler(async ({ data, context }) => {
+    const sb = admin();
+    const { data: txn, error } = await sb.from("transactions").select("*").eq("id", data.id).maybeSingle();
+    if (error) throw new Error(error.message);
+    if (!txn) throw new Error("Transaction not found");
+    if (txn.sender_id !== context.userId && txn.recipient_id !== context.userId) {
+      throw new Error("Not authorized");
+    }
+    let recipientName: string | null = null;
+    if (txn.recipient_id) {
+      const { data: p } = await sb.from("profiles").select("full_name").eq("id", txn.recipient_id).maybeSingle();
+      recipientName = p?.full_name ?? null;
+    }
+    if (!recipientName && txn.description?.startsWith("Send to ")) {
+      recipientName = txn.description.replace(/^Send to /, "").replace(/\s+•.*$/, "");
+    }
+    return { txn, recipientName };
+  });
