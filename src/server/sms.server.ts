@@ -14,10 +14,14 @@ export async function sendSms(toPhone: string, text: string): Promise<{ ok: bool
   const baseUrl = process.env.INFOBIP_BASE_URL;
   const sender = process.env.INFOBIP_SENDER || "MPESA";
   if (!apiKey || !baseUrl) {
+    console.error("[infobip] missing config", { hasKey: !!apiKey, hasBaseUrl: !!baseUrl });
     return { ok: false, error: "Infobip not configured" };
   }
   const to = toMsisdn(toPhone);
-  if (!to) return { ok: false, error: "Invalid phone" };
+  if (!to) {
+    console.error("[infobip] invalid phone", toPhone);
+    return { ok: false, error: "Invalid phone" };
+  }
 
   const host = baseUrl.replace(/^https?:\/\//, "").replace(/\/+$/, "");
   const url = `https://${host}/sms/2/text/advanced`;
@@ -34,11 +38,12 @@ export async function sendSms(toPhone: string, text: string): Promise<{ ok: bool
         messages: [{ from: sender, destinations: [{ to }], text }],
       }),
     });
+    const body = await res.text().catch(() => "");
     if (!res.ok) {
-      const body = await res.text().catch(() => "");
       console.error("[infobip] send failed", res.status, body);
       return { ok: false, error: `HTTP ${res.status}` };
     }
+    console.log("[infobip] sent", { to, sender, status: res.status, body: body.slice(0, 400) });
     return { ok: true };
   } catch (e) {
     console.error("[infobip] error", e);
