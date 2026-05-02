@@ -23,6 +23,55 @@ function normPhone(p: string) {
   return d;
 }
 
+/**
+ * After a txn is created, fetch the messages the DB trigger generated for this
+ * ref_code and SMS each one to its owner's phone via Infobip. Best-effort —
+ * never throws (so a failed SMS doesn't roll back a successful transaction).
+ * Also sends to `_extraPhone` (e.g. an unregistered recipient_phone).
+ */
+async function smsForTxn(txnId: string, _extraPhone?: string | null) {
+  try {
+    const sb = admin();
+    const { data: txn } = await sb
+      .from("transactions")
+      .select("ref_code, amount, type")
+      .eq("id", txnId)
+      .maybeSingle();
+    if (!txn?.ref_code) return;
+
+    const { data: msgs } = await sb
+      .from("messages")
+      .select("user_id, body")
+      .eq("ref_code", txn.ref_code);
+
+    const sent = new Set<string>();
+    for (const m of msgs ?? []) {
+      const { data: prof } = await sb
+        .from("profiles")
+        .select("phone")
+        .eq("id", m.user_id)
+        .maybeSingle();
+      const phone = prof?.phone;
+      if (!phone || sent.has(phone)) continue;
+      sent.add(phone);
+      await sendSms(phone, m.body);
+    }
+
+    // Notify unregistered recipient (no profile) — synthesize a short SMS.
+    if (_extraPhone) {
+      const norm = normPhone(_extraPhone);
+      if (norm && !sent.has(norm)) {
+        const text =
+          `${txn.ref_code} Confirmed. You have received Ksh${Number(txn.amount).toLocaleString("en-KE", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} on M-PESA. Dial *334# to register and access your funds.`;
+        await sendSms(norm, text);
+        sent.add(norm);
+      }
+    }
+  } catch (e) {
+    console.error("[smsForTxn] failed", e);
+  }
+}
+
 /* ================= PHONE LOOKUP (Numverify + local profile) ================= */
 
 export const lookupPhone = createServerFn({ method: "POST" })
