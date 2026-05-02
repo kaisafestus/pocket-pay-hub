@@ -5,6 +5,7 @@ import { z } from "zod";
 import { createClient } from "@supabase/supabase-js";
 import type { Database } from "@/integrations/supabase/types";
 import bcrypt from "bcryptjs";
+import { sendSms } from "./sms.server";
 
 function admin() {
   const url = process.env.SUPABASE_URL!;
