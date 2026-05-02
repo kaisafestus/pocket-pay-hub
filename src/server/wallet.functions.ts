@@ -5,6 +5,7 @@ import { z } from "zod";
 import { createClient } from "@supabase/supabase-js";
 import type { Database } from "@/integrations/supabase/types";
 import bcrypt from "bcryptjs";
+import { sendSms } from "./sms.server";
 
 function admin() {
   const url = process.env.SUPABASE_URL!;
@@ -20,6 +21,55 @@ function normPhone(p: string) {
   if (d.startsWith("0")) return "254" + d.slice(1);
   if (d.length === 9) return "254" + d;
   return d;
+}
+
+/**
+ * After a txn is created, fetch the messages the DB trigger generated for this
+ * ref_code and SMS each one to its owner's phone via Infobip. Best-effort —
+ * never throws (so a failed SMS doesn't roll back a successful transaction).
+ * Also sends to `_extraPhone` (e.g. an unregistered recipient_phone).
+ */
+async function smsForTxn(txnId: string, _extraPhone?: string | null) {
+  try {
+    const sb = admin();
+    const { data: txn } = await sb
+      .from("transactions")
+      .select("ref_code, amount, type")
+      .eq("id", txnId)
+      .maybeSingle();
+    if (!txn?.ref_code) return;
+
+    const { data: msgs } = await sb
+      .from("messages")
+      .select("user_id, body")
+      .eq("ref_code", txn.ref_code);
+
+    const sent = new Set<string>();
+    for (const m of msgs ?? []) {
+      const { data: prof } = await sb
+        .from("profiles")
+        .select("phone")
+        .eq("id", m.user_id)
+        .maybeSingle();
+      const phone = prof?.phone;
+      if (!phone || sent.has(phone)) continue;
+      sent.add(phone);
+      await sendSms(phone, m.body);
+    }
+
+    // Notify unregistered recipient (no profile) — synthesize a short SMS.
+    if (_extraPhone) {
+      const norm = normPhone(_extraPhone);
+      if (norm && !sent.has(norm)) {
+        const text =
+          `${txn.ref_code} Confirmed. You have received Ksh${Number(txn.amount).toLocaleString("en-KE", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} on M-PESA. Dial *334# to register and access your funds.`;
+        await sendSms(norm, text);
+        sent.add(norm);
+      }
+    }
+  } catch (e) {
+    console.error("[smsForTxn] failed", e);
+  }
 }
 
 /* ================= PHONE LOOKUP (Numverify + local profile) ================= */
@@ -208,6 +258,7 @@ export const sendMoney = createServerFn({ method: "POST" })
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const { data: txnId, error } = await sb.rpc("transfer_funds", rpcArgs as any);
     if (error) throw new Error(error.message);
+    await smsForTxn(txnId as string, prof?.id ? null : phone);
     return { ok: true, txnId };
   });
 
@@ -237,6 +288,7 @@ export const payTill = createServerFn({ method: "POST" })
       _fee: 0,
     });
     if (error) throw new Error(error.message);
+    await smsForTxn(txnId as string);
     return { ok: true, txnId, business: m.business_name };
   });
 
@@ -267,6 +319,7 @@ export const payBill = createServerFn({ method: "POST" })
       _fee: 0,
     });
     if (error) throw new Error(error.message);
+    await smsForTxn(txnId as string);
     return { ok: true, txnId, business: m.business_name };
   });
 
@@ -301,6 +354,7 @@ export const withdrawAtAgent = createServerFn({ method: "POST" })
     if (error) throw new Error(error.message);
     // Update agent float (cash leaves their till — but in our ledger they receive into wallet AND lose float)
     await sb.from("agents").update({ float_balance: Number(agent.float_balance) - data.amount }).eq("user_id", agent.user_id);
+    await smsForTxn(txnId as string);
     return { ok: true, txnId, agent: agent.store_name };
   });
 
@@ -334,6 +388,7 @@ export const agentDeposit = createServerFn({ method: "POST" })
     });
     if (error) throw new Error(error.message);
     await sb.from("agents").update({ float_balance: Number(agent.float_balance) + data.amount }).eq("user_id", context.userId);
+    await smsForTxn(txnId as string);
     return { ok: true, txnId, customer: cust.full_name };
   });
 
@@ -411,6 +466,16 @@ export const requestReversal = createServerFn({ method: "POST" })
     });
     if (error) throw new Error(error.message);
     await sb.from("transactions").update({ status: "reversed" }).eq("id", data.txnId);
+    // Note: reversal RPC returns void in our code path; messages keyed off the new ref are still SMS-sent via the recipient/sender profiles when their messages row was inserted. We re-fetch the latest reversal txn for this pair:
+    const { data: revTxn } = await sb
+      .from("transactions")
+      .select("id")
+      .eq("type", "reversal")
+      .eq("account_ref", txn.ref_code)
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    if (revTxn?.id) await smsForTxn(revTxn.id);
     return { ok: true };
   });
 
@@ -426,6 +491,7 @@ export const topupWallet = createServerFn({ method: "POST" })
       _amount: data.amount,
     });
     if (error) throw new Error(error.message);
+    await smsForTxn(txnId as string);
     return { ok: true, txnId };
   });
 
