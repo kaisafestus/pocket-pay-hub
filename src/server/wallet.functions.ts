@@ -258,6 +258,7 @@ export const sendMoney = createServerFn({ method: "POST" })
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const { data: txnId, error } = await sb.rpc("transfer_funds", rpcArgs as any);
     if (error) throw new Error(error.message);
+    await smsForTxn(txnId as string, prof?.id ? null : phone);
     return { ok: true, txnId };
   });
 
@@ -287,6 +288,7 @@ export const payTill = createServerFn({ method: "POST" })
       _fee: 0,
     });
     if (error) throw new Error(error.message);
+    await smsForTxn(txnId as string);
     return { ok: true, txnId, business: m.business_name };
   });
 
@@ -317,6 +319,7 @@ export const payBill = createServerFn({ method: "POST" })
       _fee: 0,
     });
     if (error) throw new Error(error.message);
+    await smsForTxn(txnId as string);
     return { ok: true, txnId, business: m.business_name };
   });
 
@@ -351,6 +354,7 @@ export const withdrawAtAgent = createServerFn({ method: "POST" })
     if (error) throw new Error(error.message);
     // Update agent float (cash leaves their till — but in our ledger they receive into wallet AND lose float)
     await sb.from("agents").update({ float_balance: Number(agent.float_balance) - data.amount }).eq("user_id", agent.user_id);
+    await smsForTxn(txnId as string);
     return { ok: true, txnId, agent: agent.store_name };
   });
 
@@ -384,6 +388,7 @@ export const agentDeposit = createServerFn({ method: "POST" })
     });
     if (error) throw new Error(error.message);
     await sb.from("agents").update({ float_balance: Number(agent.float_balance) + data.amount }).eq("user_id", context.userId);
+    await smsForTxn(txnId as string);
     return { ok: true, txnId, customer: cust.full_name };
   });
 
@@ -461,6 +466,16 @@ export const requestReversal = createServerFn({ method: "POST" })
     });
     if (error) throw new Error(error.message);
     await sb.from("transactions").update({ status: "reversed" }).eq("id", data.txnId);
+    // Note: reversal RPC returns void in our code path; messages keyed off the new ref are still SMS-sent via the recipient/sender profiles when their messages row was inserted. We re-fetch the latest reversal txn for this pair:
+    const { data: revTxn } = await sb
+      .from("transactions")
+      .select("id")
+      .eq("type", "reversal")
+      .eq("account_ref", txn.ref_code)
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    if (revTxn?.id) await smsForTxn(revTxn.id);
     return { ok: true };
   });
 
@@ -476,6 +491,7 @@ export const topupWallet = createServerFn({ method: "POST" })
       _amount: data.amount,
     });
     if (error) throw new Error(error.message);
+    await smsForTxn(txnId as string);
     return { ok: true, txnId };
   });
 
