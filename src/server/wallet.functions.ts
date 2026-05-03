@@ -270,18 +270,20 @@ export const payTill = createServerFn({ method: "POST" })
     till: z.string().min(4).max(10).regex(/^\d+$/),
     amount: z.number().positive().max(300000),
     pin: z.string().regex(/^\d{4}$/),
+    description: z.string().trim().min(1).max(60).optional(),
   }).parse)
   .handler(async ({ data, context }) => {
     await verifyPin(context.userId, data.pin);
     const sb = admin();
     const { data: m } = await sb.from("merchants").select("user_id, business_name, type").eq("shortcode", data.till).maybeSingle();
     if (!m || m.type !== "till") throw new Error("Till number not found");
+    const displayName = data.description?.trim() || m.business_name;
     const { data: txnId, error } = await sb.rpc("transfer_funds", {
       _sender: context.userId,
       _recipient: m.user_id,
       _amount: data.amount,
       _type: "pay_till",
-      _description: `Pay ${m.business_name}`,
+      _description: displayName,
       _shortcode: data.till,
       _recipient_phone: undefined,
       _account_ref: undefined,
@@ -289,7 +291,7 @@ export const payTill = createServerFn({ method: "POST" })
     });
     if (error) throw new Error(error.message);
     await smsForTxn(txnId as string);
-    return { ok: true, txnId, business: m.business_name };
+    return { ok: true, txnId, business: displayName };
   });
 
 /* ================= PAY BILL ================= */
@@ -301,18 +303,20 @@ export const payBill = createServerFn({ method: "POST" })
     account: z.string().min(1).max(60),
     amount: z.number().positive().max(500000),
     pin: z.string().regex(/^\d{4}$/),
+    description: z.string().trim().min(1).max(60).optional(),
   }).parse)
   .handler(async ({ data, context }) => {
     await verifyPin(context.userId, data.pin);
     const sb = admin();
     const { data: m } = await sb.from("merchants").select("user_id, business_name, type").eq("shortcode", data.paybill).maybeSingle();
     if (!m || m.type !== "paybill") throw new Error("Paybill number not found");
+    const displayName = data.description?.trim() || m.business_name;
     const { data: txnId, error } = await sb.rpc("transfer_funds", {
       _sender: context.userId,
       _recipient: m.user_id,
       _amount: data.amount,
       _type: "pay_bill",
-      _description: `Pay ${m.business_name} • ${data.account}`,
+      _description: `${displayName} • ${data.account}`,
       _shortcode: data.paybill,
       _account_ref: data.account,
       _recipient_phone: undefined,
@@ -320,7 +324,7 @@ export const payBill = createServerFn({ method: "POST" })
     });
     if (error) throw new Error(error.message);
     await smsForTxn(txnId as string);
-    return { ok: true, txnId, business: m.business_name };
+    return { ok: true, txnId, business: displayName };
   });
 
 /* ================= WITHDRAW AT AGENT ================= */
