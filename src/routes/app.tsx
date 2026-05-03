@@ -1,7 +1,7 @@
 import { createFileRoute, Outlet, Link, useNavigate, useRouterState } from "@tanstack/react-router";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useAuth } from "@/lib/auth";
-import { Loader2, Home, History, Store, Wallet, LogOut, User } from "lucide-react";
+import { Loader2, Home, History, Store, Wallet, LogOut, User, ChevronUp, ChevronDown } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import messagesIcon from "@/assets/messages-icon.png";
@@ -14,6 +14,7 @@ function AppLayout() {
   const { user, loading, roles, signOut } = useAuth();
   const nav = useNavigate();
   const path = useRouterState({ select: (s) => s.location.pathname });
+  const [navVisible, setNavVisible] = useState(true);
 
   useEffect(() => {
     if (!loading && !user) nav({ to: "/auth" });
@@ -41,6 +42,7 @@ function AppLayout() {
     <div className="min-h-screen bg-background pb-24">
       <Outlet />
 
+      {navVisible && (
       <nav className="fixed bottom-0 inset-x-0 bg-card border-t z-30">
         <div className="mx-auto max-w-md grid grid-cols-5">
           {tabs.slice(0, 5).map((t) => {
@@ -67,6 +69,16 @@ function AppLayout() {
           })}
         </div>
       </nav>
+      )}
+
+      <button
+        onClick={() => setNavVisible((v) => !v)}
+        className="fixed bottom-4 right-4 z-40 h-11 w-11 rounded-full bg-primary text-primary-foreground shadow-lg grid place-items-center hover:opacity-90"
+        aria-label={navVisible ? "Hide navigation" : "Show navigation"}
+        title={navVisible ? "Hide navigation" : "Show navigation"}
+      >
+        {navVisible ? <ChevronDown className="h-5 w-5" /> : <ChevronUp className="h-5 w-5" />}
+      </button>
 
       <Button
         variant="ghost"
