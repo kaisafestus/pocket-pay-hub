@@ -16,6 +16,16 @@ function initials(name: string | null | undefined) {
   return ((parts[0]?.[0] ?? "") + (parts[1]?.[0] ?? "")).toUpperCase() || "MP";
 }
 
+/** Mask middle of a phone keeping a small prefix and last 2 visible. e.g. +254712***45 */
+function maskPhone(p: string | null | undefined): string {
+  if (!p) return "";
+  const s = String(p).trim();
+  if (s.length <= 5) return s;
+  const prefix = s.slice(0, Math.max(4, s.length - 5));
+  const last2 = s.slice(-2);
+  return `${prefix}***${last2}`;
+}
+
 function SuccessScreen() {
   const { txnId } = Route.useParams();
   const { user } = useAuth();
@@ -139,10 +149,10 @@ Status: Successful
                 <div className="h-12 w-12 rounded-full bg-orange-700 grid place-items-center font-semibold text-white text-sm">
                   {initials(recipientName)}
                 </div>
-                <div className="min-w-0">
-                  <p className="font-semibold truncate">{recipientName}</p>
-                  <p className="text-sm text-zinc-300 truncate">Phone number:{phone}</p>
-                </div>
+              <div className="min-w-0">
+                <p className="font-semibold truncate">{recipientName}</p>
+                <p className="text-sm text-zinc-300 truncate">Phone number: {maskPhone(phone)}</p>
+              </div>
               </div>
             </div>
           </div>
