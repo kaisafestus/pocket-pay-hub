@@ -37,13 +37,13 @@ function LipaPage() {
 }
 
 function TillForm() {
-  const [till, setTill] = useState(""); const [amount, setAmount] = useState(""); const [open, setOpen] = useState(false);
+  const [till, setTill] = useState(""); const [recipientName, setRecipientName] = useState(""); const [amount, setAmount] = useState(""); const [open, setOpen] = useState(false);
   const fn = useServerFn(payTill); const qc = useQueryClient(); const nav = useNavigate();
-  const amt = parseFloat(amount) || 0; const valid = till.length >= 4 && amt > 0;
+  const amt = parseFloat(amount) || 0; const valid = till.length >= 4 && amt > 0 && recipientName.trim().length >= 2;
 
   const onConfirm = async (pin: string) => {
     try {
-      const r = await fn({ data: { till, amount: amt, pin } });
+      const r = await fn({ data: { till, amount: amt, pin, description: recipientName.trim() } });
       toast.success(`Paid ${formatKES(amt)} to ${r.business}`);
       await qc.invalidateQueries(); setOpen(false);
       if (r.txnId) nav({ to: "/app/success/$txnId", params: { txnId: r.txnId } });
@@ -54,22 +54,23 @@ function TillForm() {
   return (
     <div className="space-y-4">
       <div className="space-y-1.5"><Label>Till number</Label><Input value={till} onChange={(e) => setTill(e.target.value)} placeholder="e.g. 5566778" inputMode="numeric" /></div>
+      <div className="space-y-1.5"><Label>Recipient name</Label><Input value={recipientName} onChange={(e) => setRecipientName(e.target.value)} placeholder="e.g. NAIVAS SUPERMARKET" maxLength={60} /><p className="text-[11px] text-muted-foreground">Shown on the M-PESA confirmation message.</p></div>
       <div className="space-y-1.5"><Label>Amount (KES)</Label><Input value={amount} onChange={(e) => setAmount(e.target.value)} type="number" placeholder="0" /></div>
       <PinDialog open={open} onOpenChange={setOpen}
         trigger={<Button className="w-full" size="lg" disabled={!valid}>Pay {amt > 0 && formatKES(amt)}</Button>}
-        title="Confirm Payment" summary={<>Pay <b>{formatKES(amt)}</b> to till <b>{till}</b>.</>} onConfirm={onConfirm} />
+        title="Confirm Payment" summary={<>Pay <b>{formatKES(amt)}</b> to <b>{recipientName || till}</b> (till <b>{till}</b>).</>} onConfirm={onConfirm} />
     </div>
   );
 }
 
 function PaybillForm() {
-  const [paybill, setPb] = useState(""); const [account, setAcc] = useState(""); const [amount, setAmount] = useState(""); const [open, setOpen] = useState(false);
+  const [paybill, setPb] = useState(""); const [recipientName, setRecipientName] = useState(""); const [account, setAcc] = useState(""); const [amount, setAmount] = useState(""); const [open, setOpen] = useState(false);
   const fn = useServerFn(payBill); const qc = useQueryClient(); const nav = useNavigate();
-  const amt = parseFloat(amount) || 0; const valid = paybill.length >= 4 && account.length > 0 && amt > 0;
+  const amt = parseFloat(amount) || 0; const valid = paybill.length >= 4 && account.length > 0 && amt > 0 && recipientName.trim().length >= 2;
 
   const onConfirm = async (pin: string) => {
     try {
-      const r = await fn({ data: { paybill, account, amount: amt, pin } });
+      const r = await fn({ data: { paybill, account, amount: amt, pin, description: recipientName.trim() } });
       toast.success(`Paid ${formatKES(amt)} to ${r.business}`);
       await qc.invalidateQueries(); setOpen(false);
       if (r.txnId) nav({ to: "/app/success/$txnId", params: { txnId: r.txnId } });
@@ -80,17 +81,19 @@ function PaybillForm() {
   return (
     <div className="space-y-4">
       <div className="space-y-1.5"><Label>Business / Paybill number</Label><Input value={paybill} onChange={(e) => setPb(e.target.value)} placeholder="e.g. 888880" inputMode="numeric" /></div>
+      <div className="space-y-1.5"><Label>Recipient name</Label><Input value={recipientName} onChange={(e) => setRecipientName(e.target.value)} placeholder="e.g. KPLC PREPAID" maxLength={60} /><p className="text-[11px] text-muted-foreground">Shown on the M-PESA confirmation message.</p></div>
       <div className="space-y-1.5"><Label>Account number</Label><Input value={account} onChange={(e) => setAcc(e.target.value)} placeholder="Meter number / phone / account ID" /></div>
       <div className="space-y-1.5"><Label>Amount (KES)</Label><Input value={amount} onChange={(e) => setAmount(e.target.value)} type="number" placeholder="0" /></div>
       <PinDialog open={open} onOpenChange={setOpen}
         trigger={<Button className="w-full" size="lg" disabled={!valid}>Pay {amt > 0 && formatKES(amt)}</Button>}
-        title="Confirm Payment" summary={<>Pay <b>{formatKES(amt)}</b> to paybill <b>{paybill}</b>, account <b>{account}</b>.</>} onConfirm={onConfirm} />
+        title="Confirm Payment" summary={<>Pay <b>{formatKES(amt)}</b> to <b>{recipientName || paybill}</b> (paybill <b>{paybill}</b>, account <b>{account}</b>).</>} onConfirm={onConfirm} />
     </div>
   );
 }
 
 function PochiForm() {
   const [phone, setPhone] = useState("");
+  const [recipientName, setRecipientName] = useState("");
   const [amount, setAmount] = useState("");
   const [open, setOpen] = useState(false);
   const [biz, setBiz] = useState<string | null>(null);
@@ -100,21 +103,23 @@ function PochiForm() {
   const qc = useQueryClient();
   const nav = useNavigate();
   const amt = parseFloat(amount) || 0;
-  const valid = phone.replace(/\D/g, "").length >= 9 && amt > 0;
+  const valid = phone.replace(/\D/g, "").length >= 9 && amt > 0 && recipientName.trim().length >= 2;
 
   const verify = async () => {
     setLooking(true); setBiz(null);
     try {
       const r = await lookupFn({ data: { phone } });
       setBiz(r.name || r.international || phone);
+      if (r.name && r.name !== "M-PESA User") setRecipientName(r.name);
     } catch (e) { toast.error(errMsg(e)); }
     finally { setLooking(false); }
   };
 
   const onConfirm = async (pin: string) => {
     try {
-      const r = await sendFn({ data: { phone, amount: amt, pin, description: biz ? `Pochi: ${biz}` : undefined } });
-      toast.success(`Sent ${formatKES(amt)} to ${biz ?? phone}`);
+      const name = recipientName.trim() || biz || phone;
+      const r = await sendFn({ data: { phone, amount: amt, pin, description: `Send to ${name}` } });
+      toast.success(`Sent ${formatKES(amt)} to ${name}`);
       await qc.invalidateQueries(); setOpen(false);
       if (r.txnId) nav({ to: "/app/success/$txnId", params: { txnId: r.txnId } });
       else nav({ to: "/app" });
@@ -132,10 +137,11 @@ function PochiForm() {
         </div>
         {biz && <p className="text-xs text-success">✓ {biz}</p>}
       </div>
+      <div className="space-y-1.5"><Label>Recipient name</Label><Input value={recipientName} onChange={(e) => setRecipientName(e.target.value)} placeholder="e.g. MAMA BOI GROCERS" maxLength={60} /><p className="text-[11px] text-muted-foreground">Shown on the M-PESA confirmation message.</p></div>
       <div className="space-y-1.5"><Label>Amount (KES)</Label><Input value={amount} onChange={(e) => setAmount(e.target.value)} type="number" placeholder="0" /></div>
       <PinDialog open={open} onOpenChange={setOpen}
         trigger={<Button className="w-full" size="lg" disabled={!valid}>Pay {amt > 0 && formatKES(amt)}</Button>}
-        title="Confirm Payment" summary={<>Send <b>{formatKES(amt)}</b> to Pochi <b>{biz ?? phone}</b>.</>} onConfirm={onConfirm} />
+        title="Confirm Payment" summary={<>Send <b>{formatKES(amt)}</b> to <b>{recipientName || biz || phone}</b> (Pochi <b>{phone}</b>).</>} onConfirm={onConfirm} />
     </div>
   );
 }
